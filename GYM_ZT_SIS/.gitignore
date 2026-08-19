@@ -1,0 +1,19 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+*.log
+node_modules/
+desktop/dist/
+desktop/out/
+dist/
+build/
+*.egg-info/
+backend/media/
+backend/staticfiles/
+**/credenciales_iniciales.txt
+
+# Python embebido para el instalador (generar con scripts/setup_embedded_python.ps1)
+desktop/resources/python/

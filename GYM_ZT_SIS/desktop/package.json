@@ -1,0 +1,82 @@
+{
+  "name": "gym-zt-sis",
+  "productName": "GYM ZT SIS",
+  "version": "1.0.3",
+  "description": "Sistema de gestión de gimnasio — escritorio",
+  "main": "main.js",
+  "author": "MISACORP",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "pack": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
+    "dist": "node check-embedded-python.cjs && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder"
+  },
+  "build": {
+    "forceCodeSigning": false,
+    "appId": "com.misacorp.gym",
+    "productName": "GYM ZT SIS",
+    "directories": {
+      "output": "../dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "splash.html",
+      "error.html",
+      "build/gym_zt.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/media/**",
+          "!**/.env"
+        ]
+      },
+      {
+        "from": "../scripts",
+        "to": "scripts",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "resources/python",
+        "to": "python",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/gym_zt.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GYM ZT SIS"
+    }
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  }
+}

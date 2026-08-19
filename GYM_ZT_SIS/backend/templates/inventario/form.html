@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} - GYM ZT SIS{% endblock %}
+{% block page_title %}{{ titulo|default:"Producto" }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-box-seam text-accent"></i> {{ titulo }}</div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Nombre *</label>{{ form.nombre }}</div>
+                        <div class="col-md-3"><label class="form-label">Categoría *</label>{{ form.categoria }}</div>
+                        <div class="col-md-3"><label class="form-label">Imagen</label>{{ form.imagen }}</div>
+                        <div class="col-12"><label class="form-label">Descripción</label>{{ form.descripcion }}</div>
+                        <div class="col-md-4"><label class="form-label">Precio Compra</label>{{ form.precio_compra }}</div>
+                        <div class="col-md-4"><label class="form-label">Precio Venta *</label>{{ form.precio_venta }}</div>
+                        <div class="col-md-2"><label class="form-label">Stock</label>{{ form.stock }}</div>
+                        <div class="col-md-2"><label class="form-label">Stock Mín.</label>{{ form.stock_minimo }}</div>
+                        <div class="col-12"><div class="form-check">{{ form.activo }} <label class="form-check-label">Activo</label></div></div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar</button>
+                        <a href="{% url 'inventario:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

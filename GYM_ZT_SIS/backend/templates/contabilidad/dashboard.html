@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Contabilidad - GYM ZT SIS{% endblock %}
+{% block page_title %}Contabilidad{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-calculator-fill text-accent"></i> Contabilidad</h4>
+    <form method="GET" class="d-flex gap-2">
+        <input type="month" name="mes" value="{{ mes }}" class="form-control form-control-sm">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i> Filtrar</button>
+    </form>
+</div>
+
+<!-- KPI CARDS: Ingresos Separados — 2 filas para evitar desbordamiento -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-4 col-lg-4">
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="bi bi-person-hearts"></i></div>
+            <div>
+                <div class="kpi-value" style="color:#40aaff;">Bs.{{ ingresos_gym|floatformat:0 }}</div>
+                <div class="kpi-label">Ingresos Gimnasio</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-4">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="bi bi-box-seam-fill"></i></div>
+            <div>
+                <div class="kpi-value text-green">Bs.{{ ingresos_productos|floatformat:0 }}</div>
+                <div class="kpi-label">Ingresos Productos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-4">
+        <div class="kpi-card">
+            <div class="kpi-icon red"><i class="bi bi-arrow-down-circle-fill"></i></div>
+            <div>
+                <div class="kpi-value text-red">Bs.{{ total_egresos|floatformat:0 }}</div>
+                <div class="kpi-label">Total Egresos</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="bi bi-arrow-up-circle-fill"></i></div>
+            <div>
+                <div class="kpi-value text-green">Bs.{{ ganancia_neta|floatformat:0 }}</div>
+                <div class="kpi-label">Ganancia Bruta (sin egresos)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="bi bi-trophy-fill"></i></div>
+            <div>
+                <div class="kpi-value {% if utilidad >= 0 %}text-accent{% else %}text-red{% endif %}">
+                    Bs.{{ utilidad|floatformat:0 }}
+                </div>
+                <div class="kpi-label">Utilidad Neta</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INFO -->
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle text-accent"></i>
+        <span>Resumen del período: <strong>{{ mes }}</strong></span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div style="background:var(--bg-dark);border-radius:10px;padding:16px;border:1px solid var(--border-color);">
+                    <div class="fw-600 mb-3" style="color:#e8eeff;"><i class="bi bi-arrow-up-circle text-green"></i> Desglose de Ingresos</div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="color:#a8b2c8;">Ingresos Gimnasio (Membresías + Ocasionales)</span>
+                        <span class="fw-bold" style="color:#40aaff;">Bs.{{ ingresos_gym|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="color:#a8b2c8;">Ingresos por Productos</span>
+                        <span class="fw-bold text-green">Bs.{{ ingresos_productos|floatformat:2 }}</span>
+                    </div>
+                    <hr style="border-color:var(--border-color);">
+                    <div class="d-flex justify-content-between">
+                        <span style="color:#e8eeff;font-weight:600;">Total Ingresos</span>
+                        <span class="fw-bold" style="color:#e8eeff;">Bs.{{ total_ingresos|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div style="background:var(--bg-dark);border-radius:10px;padding:16px;border:1px solid var(--border-color);">
+                    <div class="fw-600 mb-3" style="color:#e8eeff;"><i class="bi bi-calculator text-accent"></i> Cálculo de Utilidad</div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="color:#a8b2c8;">Ganancia Bruta</span>
+                        <span class="fw-bold text-green">Bs.{{ ganancia_neta|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="color:#a8b2c8;">Total Egresos</span>
+                        <span class="fw-bold text-red">- Bs.{{ total_egresos|floatformat:2 }}</span>
+                    </div>
+                    <hr style="border-color:var(--border-color);">
+                    <div class="d-flex justify-content-between">
+                        <span style="color:#e8eeff;font-weight:600;">Utilidad Neta</span>
+                        <span class="fw-bold {% if utilidad >= 0 %}text-accent{% else %}text-red{% endif %}">
+                            Bs.{{ utilidad|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+            <a href="{% url 'contabilidad:egresos_lista' %}" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-arrow-down-circle"></i> Ver Egresos
+            </a>
+            <a href="{% url 'ventas:lista' %}" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-receipt-cutoff"></i> Ver Ventas
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

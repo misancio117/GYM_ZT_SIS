@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Caja - GYM ZT SIS{% endblock %}
+{% block page_title %}Caja{% endblock %}
+{% block content %}
+{% if caja %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="bi bi-safe-fill"></i></div>
+            <div><div class="kpi-value">Bs.{{ caja.monto_inicial|floatformat:2 }}</div><div class="kpi-label">Monto Inicial</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card"><div class="kpi-icon green"><i class="bi bi-arrow-up"></i></div>
+            <div><div class="kpi-value text-green">Bs.{{ caja.total_ingresos|floatformat:2 }}</div><div class="kpi-label">Ingresos</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card"><div class="kpi-icon red"><i class="bi bi-arrow-down"></i></div>
+            <div><div class="kpi-value text-red">Bs.{{ caja.total_egresos|floatformat:2 }}</div><div class="kpi-label">Egresos</div></div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card"><div class="kpi-icon purple"><i class="bi bi-wallet2"></i></div>
+            <div><div class="kpi-value text-accent">Bs.{{ caja.saldo_calculado|floatformat:2 }}</div><div class="kpi-label">Saldo Actual</div></div></div>
+    </div>
+</div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0"><i class="bi bi-clock-history text-accent"></i> Movimientos</h6>
+    <button type="button" class="btn btn-danger" onclick="document.getElementById('modalCerrarCaja').style.display='flex'">
+        <i class="bi bi-lock-fill"></i> Cerrar Caja
+    </button>
+</div>
+
+<!-- Modal cierre de caja con resumen -->
+<div id="modalCerrarCaja" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;">
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:32px;max-width:520px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);margin:auto;">
+        <div class="text-center mb-4">
+            <i class="bi bi-lock-fill" style="font-size:40px;color:#dc3545;"></i>
+            <h5 class="mt-3 mb-1" style="color:#f0f4ff;">Resumen de Caja</h5>
+            <p style="color:#c5cfe8;font-size:13px;">Verifica los montos antes de cerrar la caja.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border-color);border-radius:8px;padding:16px;margin-bottom:16px;">
+            <table style="width:100%;color:#c5cfe8;font-size:14px;border-collapse:collapse;">
+                <tr>
+                    <td style="padding:6px 4px;"><i class="bi bi-safe" style="color:var(--accent,#6c63ff);"></i> Monto Inicial</td>
+                    <td style="text-align:right;font-weight:600;color:#f0f4ff;">Bs.{{ resumen_cierre.monto_inicial|floatformat:2 }}</td>
+                </tr>
+                <tr><td colspan="2"><hr style="border-color:rgba(255,255,255,0.1);margin:8px 0;"></td></tr>
+                <tr><td colspan="2" style="color:#888;font-size:11px;padding-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Ingresos</td></tr>
+                <tr>
+                    <td style="padding:5px 4px;"><i class="bi bi-cash-coin" style="color:#28a745;"></i> Efectivo</td>
+                    <td style="text-align:right;font-weight:600;" class="text-green">Bs.{{ resumen_cierre.ingresos_efectivo|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;"><i class="bi bi-qr-code" style="color:#28a745;"></i> QR</td>
+                    <td style="text-align:right;font-weight:600;" class="text-green">Bs.{{ resumen_cierre.ingresos_qr|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td style="padding:5px 4px;"><i class="bi bi-bank" style="color:#28a745;"></i> Transferencia</td>
+                    <td style="text-align:right;font-weight:600;" class="text-green">Bs.{{ resumen_cierre.ingresos_transferencia|floatformat:2 }}</td>
+                </tr>
+                <tr style="font-size:13px;">
+                    <td style="padding:5px 4px;font-weight:600;">Total Ingresos</td>
+                    <td style="text-align:right;font-weight:700;" class="text-green">Bs.{{ resumen_cierre.total_ingresos|floatformat:2 }}</td>
+                </tr>
+                <tr><td colspan="2"><hr style="border-color:rgba(255,255,255,0.1);margin:8px 0;"></td></tr>
+                <tr>
+                    <td style="padding:5px 4px;"><i class="bi bi-arrow-down-circle" style="color:#dc3545;"></i> Egresos / Gastos</td>
+                    <td style="text-align:right;font-weight:600;" class="text-red">-Bs.{{ resumen_cierre.total_egresos|floatformat:2 }}</td>
+                </tr>
+                <tr><td colspan="2"><hr style="border-color:rgba(255,255,255,0.2);margin:8px 0;"></td></tr>
+                <tr style="font-size:16px;">
+                    <td style="padding:8px 4px;font-weight:700;color:#f0f4ff;">💰 Deberías tener</td>
+                    <td style="text-align:right;font-weight:800;font-size:18px;" class="text-accent">Bs.{{ resumen_cierre.monto_esperado|floatformat:2 }}</td>
+                </tr>
+            </table>
+        </div>
+        <p style="color:#c5cfe8;font-size:12px;text-align:center;margin-bottom:16px;">No podrás registrar más ventas ni egresos hasta abrir una nueva caja.</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('modalCerrarCaja').style.display='none'">
+                Cancelar
+            </button>
+            <form method="post" style="margin:0;">
+                {% csrf_token %}<input type="hidden" name="accion" value="cerrar">
+                <button type="submit" class="btn btn-danger"><i class="bi bi-lock-fill"></i> Confirmar Cierre</button>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Hora</th><th>Tipo</th><th>Descripción</th><th>Usuario</th><th>Monto</th></tr></thead>
+            <tbody>
+            {% for m in movimientos %}
+            <tr>
+                <td>{{ m.fecha|time:"H:i" }}</td>
+                <td><span class="chip {% if m.tipo == 'ingreso' %}chip-green{% else %}chip-red{% endif %}">{{ m.get_tipo_display }}</span></td>
+                <td>{{ m.descripcion }}</td>
+                <td><span style="color: #f0f4ff;"><i class="bi bi-person"></i> {{ m.usuario.username|default:'-' }}</span></td>
+                <td class="fw-bold {% if m.tipo == 'ingreso' %}text-green{% else %}text-red{% endif %}">{% if m.tipo == 'egreso' %}-{% endif %}Bs.{{ m.monto }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-muted text-center py-3">Sin movimientos</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card text-center">
+            <div class="card-body py-5">
+                <i class="bi bi-safe" style="font-size:64px;color:var(--text-muted)"></i>
+                <h5 class="mt-3">No hay caja abierta</h5>
+                <p class="text-muted">Abre la caja para comenzar a registrar movimientos</p>
+                <button type="button" class="btn btn-success btn-lg mt-3" onclick="document.getElementById('modalAbrirCaja').style.display='flex'">
+                    <i class="bi bi-unlock-fill"></i> Abrir Caja
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% if cajas_anteriores %}
+<div class="card mt-4">
+    <div class="card-header"><i class="bi bi-clock-history text-accent"></i> Cajas Anteriores</div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Apertura</th><th>Cierre</th><th>M. Inicial</th><th>M. Final</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+            {% for c in cajas_anteriores %}
+            <tr>
+                <td>{{ c.fecha_apertura|date:"d/m/Y" }}</td>
+                <td><span style="color: #f0f4ff;"><i class="bi bi-person"></i> {{ c.usuario.username|default:'-' }}</span></td>
+                <td>{{ c.fecha_apertura|time:"H:i" }}</td>
+                <td>{{ c.fecha_cierre|time:"H:i"|default:"-" }}</td>
+                <td>Bs.{{ c.monto_inicial }}</td>
+                <td class="fw-bold">Bs.{{ c.monto_final|default:"—" }}</td>
+                <td><span class="chip {% if c.estado == 'abierta' %}chip-green{% else %}chip-red{% endif %}">{{ c.get_estado_display }}</span></td>
+                <td><a href="{% url 'caja:detalle' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal apertura de caja con monto inicial -->
+<div id="modalAbrirCaja" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:32px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div class="text-center mb-4">
+            <i class="bi bi-safe" style="font-size:40px;color:#28a745;"></i>
+            <h5 class="mt-3 mb-1" style="color:#f0f4ff;">Apertura de Caja</h5>
+            <p style="color:#c5cfe8;font-size:14px;">Ingresa el monto en efectivo con el que inicias la caja.</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="abrir">
+            <div class="mb-4">
+                <label class="form-label fw-semibold" style="color:#c5cfe8;">Monto Inicial (Bs.)</label>
+                <input type="number" name="monto_inicial" class="form-control form-control-lg" step="0.01" min="0" value="0" required autofocus>
+            </div>
+            <div class="d-flex gap-3 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('modalAbrirCaja').style.display='none'">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-unlock-fill"></i> Abrir Caja</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - GYM ZT SIS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<!-- KPI CARDS — 2 filas para que los números no se desborden -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="bi bi-cash-stack"></i></div>
+            <div>
+                <div class="kpi-value text-green">Bs.{{ ingresos_hoy|floatformat:0 }}</div>
+                <div class="kpi-label">Ingresos Hoy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon red"><i class="bi bi-graph-down-arrow"></i></div>
+            <div>
+                <div class="kpi-value text-red">Bs.{{ egresos_hoy|floatformat:0 }}</div>
+                <div class="kpi-label">Egresos Hoy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="bi bi-trophy-fill"></i></div>
+            <div>
+                <div class="kpi-value text-accent">Bs.{{ ganancia_hoy|floatformat:0 }}</div>
+                <div class="kpi-label">Ganancia Neta</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="bi bi-person-check-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ asistencias_hoy }}</div>
+                <div class="kpi-label">Asistencias Hoy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon orange"><i class="bi bi-person-walking"></i></div>
+            <div>
+                <div class="kpi-value">{{ ocasionales_hoy }}</div>
+                <div class="kpi-label">Ocasionales</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="bi bi-credit-card-fill"></i></div>
+            <div>
+                <div class="kpi-value">{{ membresias_activas }}</div>
+                <div class="kpi-label">Membresías Activas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CHARTS ROW -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bar-chart-fill text-accent"></i> Ingresos Últimos 7 Días</span>
+            </div>
+            <div class="card-body" style="padding:20px;">
+                <canvas id="chartIngresos" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-pie-chart-fill text-accent"></i> Métodos de Pago Hoy (Bs.)</div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="padding:20px;">
+                <canvas id="chartMetodos" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM ROW -->
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-receipt-cutoff text-accent"></i> Ventas Recientes</span>
+                <a href="{% url 'ventas:lista' %}" class="btn btn-sm btn-outline-primary">Ver todo</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>#</th><th>Producto / Servicio</th><th>Total</th><th>Usuario</th><th>Método</th><th>Hora</th></tr></thead>
+                    <tbody>
+                    {% for v in ventas_recientes %}
+                    <tr>
+                        <td>{{ v.pk }}</td>
+                        <td style="color:#f0f4ff;">{{ v.producto_label|truncatechars:30 }}</td>
+                        <td class="text-green fw-bold">Bs.{{ v.total }}</td>
+                        <td><span style="color: #f0f4ff;"><i class="bi bi-person"></i> {{ v.usuario_name }}</span></td>
+                        <td><span class="chip chip-blue">{{ v.metodo_pago }}</span></td>
+                        <td class="text-muted">{{ v.hora }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Sin ventas hoy</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-star-fill text-accent"></i> Top Productos del Mes</div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Producto</th><th>Vendidos</th></tr></thead>
+                    <tbody>
+                    {% for p in top_productos %}
+                    <tr>
+                        <td style="color:#f0f4ff;">{{ p.detalles__producto__nombre }}</td>
+                        <td><span class="chip chip-green">{{ p.total_vendido }}</span></td>
+                    </tr>
+                    {% empty %}<tr><td colspan="2" class="text-muted text-center py-3">Sin datos este mes</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if caja_activa %}
+<div class="alert alert-success mt-3 d-flex align-items-center gap-2">
+    <i class="bi bi-safe-fill"></i>
+    <strong>Caja Abierta</strong> — Monto inicial: Bs.{{ caja_activa.monto_inicial }} | Saldo: Bs.{{ caja_activa.saldo_calculado|floatformat:2 }}
+    <a href="{% url 'caja:caja' %}" class="btn btn-sm btn-outline-light ms-auto">Ver Caja</a>
+</div>
+{% else %}
+<div class="alert alert-warning mt-3 d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong style="color:#1a1a1a;">No hay caja abierta</strong><span style="color:#1a1a1a;"> — Abre una caja para registrar movimientos.</span>
+    <a href="{% url 'caja:caja' %}" class="btn btn-sm btn-outline-dark ms-auto">Abrir Caja</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 7-day income chart
+const ctxIngresos = document.getElementById('chartIngresos').getContext('2d');
+new Chart(ctxIngresos, {
+    type: 'bar',
+    data: {
+        labels: JSON.parse('{{ labels_7dias|escapejs }}'),
+        datasets: [{
+            label: 'Ingresos (Bs.)',
+            data: JSON.parse('{{ datos_7dias|escapejs }}'),
+            backgroundColor: 'rgba(108,99,255,0.6)',
+            borderColor: '#6c63ff',
+            borderWidth: 2,
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8d97ad' } },
+            x: { grid: { display: false }, ticks: { color: '#8d97ad' } }
+        }
+    }
+});
+
+// Payment methods pie chart — con montos Bs.
+const metodos = JSON.parse('{{ metodos_data|escapejs }}');
+const metodoLabels = Object.keys(metodos).map(k => k.charAt(0).toUpperCase()+k.slice(1));
+const metodoValues = Object.values(metodos);
+if(metodoValues.length > 0) {
+    const ctxMetodos = document.getElementById('chartMetodos').getContext('2d');
+    new Chart(ctxMetodos, {
+        type: 'doughnut',
+        data: {
+            labels: metodoLabels,
+            datasets: [{
+                data: metodoValues,
+                backgroundColor: ['#6c63ff', '#00d97e', '#ff922b'],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#8d97ad', padding: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.parsed;
+                            return ` Bs. ${val.toLocaleString('es-BO', {minimumFractionDigits: 2})}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Auto refresh KPIs every 60 seconds
+setInterval(async () => {
+    try {
+        const res = await fetch('/api/dashboard/stats/');
+        const data = await res.json();
+    } catch(e) {}
+}, 60000);
+</script>
+{% endblock %}

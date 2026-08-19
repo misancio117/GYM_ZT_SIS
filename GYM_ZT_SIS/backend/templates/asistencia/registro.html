@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Asistencia - GYM ZT SIS{% endblock %}
+{% block page_title %}Panel de Asistencia{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card quick-search-card mb-3">
+            <div class="card-header"><i class="bi bi-person-check-fill text-accent"></i> Registrar Asistencia</div>
+            <div class="card-body">
+                <input type="text" id="clienteSearch" class="form-control mb-3" placeholder="🔍 Buscar cliente por nombre o CI..." autofocus>
+                <div id="searchResults"></div>
+                <form method="post" id="asistenciaForm" class="d-none">
+                    {% csrf_token %}
+                    <input type="hidden" name="cliente_id" id="clienteId">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded" style="background:var(--bg-card2)">
+                        <i class="bi bi-person-circle" style="font-size:36px;color:var(--accent)"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold" style="color:#f0f4ff;" id="clienteNombre"></div>
+                            <small style="color:#c5cfe8;" id="clienteMembresia"></small>
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Registrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-person-walking text-orange"></i> Entrada Ocasional</div>
+            <div class="card-body">
+                {% if caja_abierta %}
+                <form method="post" action="{% url 'asistencia:ocasional_nuevo' %}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <input type="text" name="nombre" class="form-control" placeholder="Nombre (opcional)" value="Visitante">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col">
+                            <input type="number" name="monto" class="form-control" placeholder="Monto Bs." step="0.01" required>
+                        </div>
+                        <div class="col">
+                            <select name="metodo_pago" class="form-select">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="qr">QR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100"><i class="bi bi-person-plus"></i> Registrar Ocasional</button>
+                </form>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="bi bi-lock-fill" style="font-size:32px;color:#dc3545;"></i>
+                    <p class="mt-2 mb-3" style="color:#c5cfe8;font-size:14px;">La caja está cerrada.<br>Abre la caja para registrar entradas ocasionales.</p>
+                    <a href="{% url 'caja:caja' %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-safe"></i> Ir a Caja</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar-check text-accent"></i> Asistencias de Hoy ({{ total_hoy }} + {{ ocasionales_hoy }} ocasionales)</span>
+                <a href="{% url 'asistencia:lista' %}" class="btn btn-sm btn-outline-primary">Ver historial</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Cliente</th><th>Membresía</th><th>Hora</th><th>Tipo</th></tr></thead>
+                    <tbody>
+                    {% for a in asistencias_hoy %}
+                    <tr>
+                        <td class="fw-semibold">{{ a.cliente.nombre }}</td>
+                        <td>
+                            {% with mem=a.cliente.get_membresia_activa %}
+                                {% if mem %}🏷️ {{ mem.membresia.nombre }}
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>{{ a.hora|time:"H:i" }}</td>
+                        <td><span class="badge bg-primary">Suscrito</span></td>
+                    </tr>
+                    {% endfor %}
+                    {% for o in ocasionales_hoy_lista %}
+                    <tr style="background:rgba(72,199,142,0.08);">
+                        <td class="fw-semibold" style="color:#48c78e;">{{ o.nombre }}</td>
+                        <td style="color:#48c78e;">{{ o.hora|time:"H:i" }}</td>
+                        <td><span class="badge" style="background:#48c78e;color:#0d1b0f;">Ocasional &bull; Bs.{{ o.monto_pagado }}</span></td>
+                    </tr>
+                    {% endfor %}
+                    {% if not asistencias_hoy and not ocasionales_hoy_lista %}
+                    <tr><td colspan="3" class="text-muted text-center py-3">Sin asistencias hoy</td></tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const searchInput = document.getElementById('clienteSearch');
+const results = document.getElementById('searchResults');
+const form = document.getElementById('asistenciaForm');
+let timeout;
+searchInput.addEventListener('input', function() {
+    clearTimeout(timeout);
+    const q = this.value.trim();
+    if(q.length < 2) { results.innerHTML = ''; form.classList.add('d-none'); return; }
+    timeout = setTimeout(async () => {
+        const res = await fetch(`/api/clientes/search/?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        results.innerHTML = '';
+        data.results.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'attendance-item';
+            item.style.cursor = 'pointer';
+            item.addEventListener('click', () => selectCliente(c.id, c.nombre, c.membresia));
+
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-person-circle';
+            icon.style.cssText = 'font-size:24px;color:var(--accent)';
+
+            const info = document.createElement('div');
+            const nameDiv = document.createElement('div');
+            nameDiv.style.cssText = 'color:#f0f4ff;font-weight:600;';
+            nameDiv.textContent = c.nombre;
+            const ciSmall = document.createElement('small');
+            ciSmall.style.color = '#c5cfe8';
+            ciSmall.textContent = '🏷️ ' + c.membresia;
+            info.append(nameDiv, ciSmall);
+
+            item.append(icon, info);
+            results.appendChild(item);
+        });
+    }, 300);
+});
+function selectCliente(id, nombre, membresia) {
+    document.getElementById('clienteId').value = id;
+    document.getElementById('clienteNombre').textContent = nombre;
+    document.getElementById('clienteMembresia').textContent = '🏷️ ' + membresia;
+    form.classList.remove('d-none');
+    results.innerHTML = '';
+    searchInput.value = '';
+}
+</script>
+{% endblock %}

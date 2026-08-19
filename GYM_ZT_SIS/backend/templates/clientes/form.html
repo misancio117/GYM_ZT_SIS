@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} - GYM ZT SIS{% endblock %}
+{% block page_title %}{{ titulo|default:"Cliente" }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-person-fill text-accent"></i> {{ titulo }}</div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre Completo *</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ubicación</label>
+                            {{ form.ubicacion }}
+                            {% if form.ubicacion.errors %}<div class="text-danger small">{{ form.ubicacion.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Peso Inicial (Kg)</label>
+                            {{ form.peso_inicial }}
+                            {% if form.peso_inicial.errors %}<div class="text-danger small">{{ form.peso_inicial.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            {{ form.telefono }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Foto</label>
+                            {{ form.foto }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Estado</label>
+                            {{ form.estado }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notas</label>
+                            {{ form.notas }}
+                        </div>
+                    </div>
+
+                    {% if membresias_disponibles %}
+                    <!-- ===== SECCIÓN MEMBRESÍA AL REGISTRAR ===== -->
+                    <hr class="my-4" style="border-color: rgba(108,99,255,0.3);">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="asignarMembresia" onchange="toggleMembresia(this)">
+                            <label class="form-check-label fw-semibold" for="asignarMembresia" style="color: var(--accent);">
+                                <i class="bi bi-credit-card-fill"></i> Asignar membresía ahora
+                            </label>
+                        </div>
+                    </div>
+                    <div id="membresiaSection" style="display:none;">
+                        <div class="card" style="background: rgba(108,99,255,0.06); border-color: rgba(108,99,255,0.25);">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <!-- Membresía -->
+                                    <div class="col-md-12">
+                                        <label class="form-label">Tipo de Membresía *</label>
+                                        <select name="membresia_id" id="membresiaSelect" class="form-select" onchange="actualizarPrecio()">
+                                            <option value="">— Seleccionar membresía —</option>
+                                            {% for m in membresias_disponibles %}
+                                            <option value="{{ m.pk }}" data-precio="{{ m.precio }}" data-dias="{{ m.duracion_dias }}">
+                                                {{ m.nombre }} — {{ m.duracion_dias }} días — Bs.{{ m.precio }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <!-- Precio informativo -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Precio</label>
+                                        <div class="form-control" id="precioMembresia" style="color: var(--accent-green); font-weight: 700; background: var(--bg-dark);">
+                                            Bs. 0.00
+                                        </div>
+                                    </div>
+                                    <!-- Fecha inicio (editable, default hoy) -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Fecha de Inicio</label>
+                                        <input type="date" name="fecha_inicio_membresia" id="fechaInicioMembresia"
+                                               class="form-control">
+                                    </div>
+                                    <!-- Método de pago -->
+                                    <div class="col-md-4">
+                                        <label class="form-label">Método de Pago</label>
+                                        <div class="d-flex gap-2">
+                                            <label class="pago-option" id="opt-efectivo">
+                                                <input type="radio" name="metodo_pago" value="efectivo" checked onchange="selectPago('efectivo')" style="display:none;">
+                                                <span><i class="bi bi-cash-coin"></i> Efectivo</span>
+                                            </label>
+                                            <label class="pago-option" id="opt-qr">
+                                                <input type="radio" name="metodo_pago" value="qr" onchange="selectPago('qr')" style="display:none;">
+                                                <span><i class="bi bi-qr-code"></i> QR</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <!-- Resumen -->
+                                    <div class="col-12" id="resumenMembresia" style="display:none;">
+                                        <div class="alert" style="background: rgba(0,217,126,0.08); border: 1px solid rgba(0,217,126,0.25); color: var(--text-primary); border-radius: 10px; padding: 12px 16px; margin-bottom:0;">
+                                            <i class="bi bi-check-circle-fill text-green me-2"></i>
+                                            <span id="resumenTexto"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar Cliente</button>
+                        <a href="{% url 'clientes:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.pago-option {
+    cursor: pointer;
+    flex: 1;
+}
+.pago-option span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg-dark);
+    transition: all 0.2s;
+    user-select: none;
+}
+.pago-option.selected span {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(108,99,255,0.1);
+}
+</style>
+
+<script>
+function toggleMembresia(cb) {
+    document.getElementById('membresiaSection').style.display = cb.checked ? 'block' : 'none';
+    if (!cb.checked) {
+        document.getElementById('membresiaSelect').value = '';
+        document.getElementById('precioMembresia').textContent = 'Bs. 0.00';
+        document.getElementById('resumenMembresia').style.display = 'none';
+    }
+}
+
+function actualizarPrecio() {
+    const sel = document.getElementById('membresiaSelect');
+    const opt = sel.options[sel.selectedIndex];
+    const precio = opt ? (opt.getAttribute('data-precio') || '0') : '0';
+    const dias = opt ? (opt.getAttribute('data-dias') || '0') : '0';
+    document.getElementById('precioMembresia').textContent = 'Bs. ' + parseFloat(precio).toFixed(2);
+    if (sel.value) {
+        document.getElementById('resumenMembresia').style.display = 'block';
+        actualizarResumen();
+    } else {
+        document.getElementById('resumenMembresia').style.display = 'none';
+    }
+}
+
+function selectPago(metodo) {
+    document.querySelectorAll('.pago-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById('opt-' + metodo).classList.add('selected');
+    actualizarResumen();
+}
+
+function actualizarResumen() {
+    const sel = document.getElementById('membresiaSelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !sel.value) return;
+    const nombre = opt.text.split(' —')[0];
+    const precio = opt.getAttribute('data-precio');
+    const dias = opt.getAttribute('data-dias');
+    const pagoEl = document.querySelector('input[name="metodo_pago"]:checked');
+    const pago = pagoEl ? pagoEl.value.toUpperCase() : 'EFECTIVO';
+    document.getElementById('resumenTexto').textContent =
+        `Se generará una venta de "${nombre}" por Bs. ${parseFloat(precio).toFixed(2)} (${dias} días) - Pago: ${pago}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('opt-efectivo').classList.add('selected');
+});
+</script>
+{% endblock %}

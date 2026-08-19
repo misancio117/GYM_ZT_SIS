@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Inventario - GYM ZT SIS{% endblock %}
+{% block page_title %}Inventario{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-box-seam-fill text-accent"></i> Productos {% if cat %}- {{ cat|title }}{% endif %}</h4>
+    <a href="{% url 'inventario:crear' %}{% if cat %}?cat={{ cat }}{% endif %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo Producto</a>
+</div>
+{% if productos_bajo_stock > 0 %}
+<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i> {{ productos_bajo_stock }} producto(s) con stock bajo</div>
+{% endif %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar producto...">
+                {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+            </div>
+            <div class="col-md-4"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Buscar</button></div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Img</th><th>Nombre</th><th>P. Compra</th><th>P. Venta</th><th>Ganancia</th><th>Stock</th><th>Acciones</th></tr></thead>
+            <tbody>
+            {% for p in productos %}
+            <tr>
+                <td>
+                    <div style="width:40px;height:40px;position:relative;">
+                        {% if p.imagen %}
+                        <img src="{{ p.imagen.url }}" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                             style="width:40px;height:40px;border-radius:8px;object-fit:cover;position:absolute;top:0;left:0;z-index:2;">
+                        {% endif %}
+                        <div class="{% if p.imagen %}d-none{% else %}d-flex{% endif %}" 
+                             style="width:40px;height:40px;border-radius:8px;background:var(--bg-card2);align-items:center;justify-content:center;position:absolute;top:0;left:0;z-index:1;">
+                            <i class="bi bi-box"></i>
+                        </div>
+                    </div>
+                </td>
+                <td class="fw-semibold">{{ p.nombre }}</td>
+                <td>Bs.{{ p.precio_compra }}</td>
+                <td class="text-green">Bs.{{ p.precio_venta }}</td>
+                <td class="text-accent">Bs.{{ p.ganancia_unitaria }}</td>
+                <td><span class="chip {% if p.stock_bajo %}chip-red{% else %}chip-green{% endif %}">{{ p.stock }}</span></td>
+                <td class="d-flex gap-1">
+                    <a href="{% url 'inventario:agregar_stock' p.pk %}" class="btn btn-sm btn-outline-success" title="Agregar Stock"><i class="bi bi-plus-circle"></i> Stock</a>
+                    <a href="{% url 'inventario:editar' p.pk %}" class="btn btn-sm btn-outline-warning" title="Editar"><i class="bi bi-pencil"></i></a>
+                    {% if user.es_admin %}
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-producto"
+                            data-pk="{{ p.pk }}" data-nombre="{{ p.nombre }}"
+                            title="Eliminar Producto">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="text-muted text-center py-3">Sin productos</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

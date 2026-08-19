@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GYM ZT SIS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'css/gym.css' %}" rel="stylesheet">
+</head>
+<body>
+<div class="login-wrapper">
+    <div class="login-bg"></div>
+    <div class="login-card">
+        <div class="login-logo">
+            <i class="bi bi-lightning-charge-fill"></i>
+            <h1>GYM ZT SIS</h1>
+            <p>Sistema de Gestión de Gimnasio</p>
+        </div>
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> Usuario o contraseña incorrectos
+        </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Usuario</label>
+                <div class="input-group">
+                    <span class="input-group-text" style="background:var(--bg-dark);border-color:var(--border-color);color:var(--text-muted)"><i class="bi bi-person"></i></span>
+                    <input type="text" name="username" class="form-control" placeholder="Ingrese su usuario" required autofocus>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <span class="input-group-text" style="background:var(--bg-dark);border-color:var(--border-color);color:var(--text-muted)"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" id="id_password" class="form-control" placeholder="Ingrese su contraseña" required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color:var(--border-color); color:var(--text-muted)">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+            </button>
+        </form>
+        <div class="text-center mt-3">
+            <a href="{% url 'core:recuperar_password' %}" class="small" style="color:var(--text-muted)">
+                <i class="bi bi-question-circle"></i> ¿Olvidaste tu contraseña?
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#id_password');
+
+    togglePassword.addEventListener('click', function (e) {
+        // toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        // toggle the eye icon
+        this.querySelector('i').classList.toggle('bi-eye');
+        this.querySelector('i').classList.toggle('bi-eye-slash');
+    });
+</script>
+</body>
+</html>

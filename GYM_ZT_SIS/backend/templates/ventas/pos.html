@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load l10n %}
+{% block title %}Punto de Venta - GYM ZT SIS{% endblock %}
+{% block page_title %}Punto de Venta{% endblock %}
+{% block extra_css %}
+<style>.content { padding: 12px; }</style>
+{% endblock %}
+{% block content %}
+{% if not caja_activa %}
+<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> <strong>No hay caja abierta.</strong> Debes abrir una caja para registrar ventas. <a href="{% url 'caja:caja' %}" class="btn btn-sm btn-warning ms-2">Abrir Caja</a></div>
+{% endif %}
+<div class="pos-container">
+    <!-- LEFT: Products -->
+    <div class="pos-products">
+        <div class="d-flex gap-2 mb-3">
+            <input type="text" id="prodSearch" class="form-control" placeholder="🔍 Buscar producto...">
+            <button class="btn btn-outline-primary" onclick="showSection('snacks')"><i class="bi bi-cup-straw"></i> Snacks</button>
+            <button class="btn btn-outline-success" onclick="showSection('suplementos')"><i class="bi bi-capsule"></i> Suplementos</button>
+        </div>
+        <div id="secSnacks">
+            <h6 class="text-muted mb-2">Snacks</h6>
+            <div class="product-grid">
+            {% for p in snacks %}
+                <div class="product-card" data-product-id="{{ p.pk }}" data-product-name="{{ p.nombre|escape }}" data-precio="{{ p.precio_venta|unlocalize|default:0 }}" data-costo="{{ p.precio_compra|unlocalize|default:0 }}" data-stock="{{ p.stock|unlocalize|default:0 }}" onclick="addProduct(this)">
+                    <div style="width:80px;height:80px;margin:0 auto 8px;position:relative;">
+                        {% if p.imagen %}
+                        <img src="{{ p.imagen.url }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                             style="width:80px;height:80px;border-radius:8px;object-fit:cover;position:absolute;top:0;left:0;z-index:2;">
+                        {% endif %}
+                        <div class="{% if p.imagen %}d-none{% else %}d-flex{% endif %}" 
+                             style="width:80px;height:80px;border-radius:8px;background:var(--bg-dark);align-items:center;justify-content:center;position:absolute;top:0;left:0;z-index:1;">
+                            <i class="bi bi-cup-straw" style="font-size:30px"></i>
+                        </div>
+                    </div>
+                    <div class="product-name">{{ p.nombre }}</div>
+                    <div class="product-price">Bs.{{ p.precio_venta }}</div>
+                    <div class="product-stock">Stock: {{ p.stock }}</div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+        <div id="secSuplementos" style="display:none">
+            <h6 class="text-muted mb-2">Suplementos</h6>
+            <div class="product-grid">
+            {% for p in suplementos %}
+                <div class="product-card" data-product-id="{{ p.pk }}" data-product-name="{{ p.nombre|escape }}" data-precio="{{ p.precio_venta|unlocalize|default:0 }}" data-costo="{{ p.precio_compra|unlocalize|default:0 }}" data-stock="{{ p.stock|unlocalize|default:0 }}" onclick="addProduct(this)">
+                    <div style="width:80px;height:80px;margin:0 auto 8px;position:relative;">
+                        {% if p.imagen %}
+                        <img src="{{ p.imagen.url }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                             style="width:80px;height:80px;border-radius:8px;object-fit:cover;position:absolute;top:0;left:0;z-index:2;">
+                        {% endif %}
+                        <div class="{% if p.imagen %}d-none{% else %}d-flex{% endif %}" 
+                             style="width:80px;height:80px;border-radius:8px;background:var(--bg-dark);align-items:center;justify-content:center;position:absolute;top:0;left:0;z-index:1;">
+                            <i class="bi bi-capsule" style="font-size:30px"></i>
+                        </div>
+                    </div>
+                    <div class="product-name">{{ p.nombre }}</div>
+                    <div class="product-price">Bs.{{ p.precio_venta }}</div>
+                    <div class="product-stock">Stock: {{ p.stock }}</div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- RIGHT: Cart -->
+    <div class="pos-cart card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-cart-fill text-accent"></i> Carrito</span>
+            <button class="btn btn-sm btn-outline-danger" onclick="clearCart()"><i class="bi bi-trash"></i></button>
+        </div>
+        <div class="card-body pos-cart-body p-3">
+            <!-- Client selector -->
+            <div class="mb-3">
+                <input type="text" id="clienteSearchPOS" class="form-control form-control-sm" placeholder="🔍 Buscar cliente (opcional)...">
+                <div id="clienteResultsPOS" class="mt-1"></div>
+                <div id="selectedClient" class="d-none mt-2 p-2 rounded d-flex align-items-center gap-2" style="background:var(--bg-card2)">
+                    <i class="bi bi-person-circle text-accent"></i>
+                    <span id="selectedClientName" class="flex-grow-1 small fw-bold"></span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearClient()"><i class="bi bi-x"></i></button>
+                </div>
+            </div>
+            <div id="cartItems"></div>
+        </div>
+        <div class="cart-total-bar">
+            <div class="d-flex justify-content-between mb-1"><span class="text-muted">Subtotal:</span><span id="subtotal">Bs.0.00</span></div>
+            <div class="d-flex justify-content-between mb-2"><span class="fw-bold" style="font-size:18px">Total:</span><span class="fw-bold text-green" style="font-size:18px" id="total">Bs.0.00</span></div>
+            <div class="mb-3">
+                <select id="metodoPago" class="form-select form-select-sm">
+                    <option value="efectivo">💵 Efectivo</option>
+                    <option value="transferencia">🏦 Transferencia</option>
+                    <option value="qr">📱 QR</option>
+                </select>
+            </div>
+            <button class="btn btn-success w-100 py-2 fw-bold" onclick="finalizarVenta()" {% if not caja_activa %}disabled{% endif %}>
+                <i class="bi bi-check-circle-fill"></i> COBRAR
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let cart = [];
+let selectedClientId = null;
+
+function showToast(msg, type='success') {
+    let container = document.getElementById('posToastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'posToastContainer';
+        container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const color = type === 'success' ? '#198754' : '#dc3545';
+    toast.style.cssText = `background:${color};color:#fff;padding:14px 20px;border-radius:8px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.4);max-width:360px;opacity:0;transition:opacity 0.3s;`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; });
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+function showSection(sec) {
+    document.getElementById('secSnacks').style.display = sec==='snacks'?'block':'none';
+    document.getElementById('secSuplementos').style.display = sec==='suplementos'?'block':'none';
+}
+
+function addProduct(el) {
+    const id = parseInt(el.dataset.productId, 10);
+    const nombre = el.dataset.productName;
+    const precio = parseFloat(el.dataset.precio) || 0;
+    const costo = parseFloat(el.dataset.costo) || 0;
+    const stock = parseInt(el.dataset.stock, 10) || 0;
+    if(stock <= 0) return;
+
+    const existing = cart.find(i => i.tipo==='producto' && i.producto_id===id);
+    if(existing) {
+        existing.cantidad++;
+    } else {
+        cart.push({tipo:'producto', producto_id:id, descripcion:nombre, precio_unitario:precio, costo_unitario:costo, cantidad:1, max_stock:stock});
+    }
+    adjustProductCardStock(id, 1);
+    renderCart();
+}
+
+function adjustProductCardStock(productId, change) {
+    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+    if(!card) return;
+    const currentStock = parseInt(card.dataset.stock, 10) || 0;
+    const newStock = currentStock - change;
+    card.dataset.stock = newStock;
+    const stockEl = card.querySelector('.product-stock');
+    if(stockEl) stockEl.textContent = `Stock: ${newStock}`;
+    if(newStock <= 0) {
+        card.style.display = 'none';
+    } else {
+        card.style.display = '';
+    }
+}
+
+function renderCart() {
+    const container = document.getElementById('cartItems');
+    let html = '';
+    let total = 0;
+    cart.forEach((item, idx) => {
+        const sub = item.precio_unitario * item.cantidad;
+        total += sub;
+        html += `<div class="cart-item">
+            <div class="cart-item-name" style="color:#f0f4ff;">${item.descripcion}<br><small style="color:#c5cfe8;">Bs.${item.precio_unitario} x ${item.cantidad}</small></div>
+            <div class="d-flex align-items-center gap-1">
+                <button class="btn-qty" onclick="changeQty(${idx},-1)">-</button>
+                <span class="px-1" style="color:#f0f4ff;">${item.cantidad}</span>
+                <button class="btn-qty" onclick="changeQty(${idx},1)">+</button>
+            </div>
+            <div class="cart-item-price">Bs.${sub.toFixed(2)}</div>
+            <button class="btn btn-sm btn-outline-danger ms-1" onclick="removeItem(${idx})"><i class="bi bi-x"></i></button>
+        </div>`;
+    });
+    container.innerHTML = html || '<p class="text-muted text-center py-4">Carrito vacío</p>';
+    document.getElementById('subtotal').textContent = 'Bs.' + total.toFixed(2);
+    document.getElementById('total').textContent = 'Bs.' + total.toFixed(2);
+}
+
+function changeQty(idx, d) {
+    const item = cart[idx];
+    if(!item) return;
+
+    if(d === 1) {
+        const card = document.querySelector(`.product-card[data-product-id="${item.producto_id}"]`);
+        const available = card ? parseInt(card.dataset.stock, 10) || 0 : 0;
+        if(available <= 0) return;
+        item.cantidad += 1;
+        adjustProductCardStock(item.producto_id, 1);
+    } else {
+        item.cantidad -= 1;
+        adjustProductCardStock(item.producto_id, -1);
+        if(item.cantidad <= 0) {
+            cart.splice(idx, 1);
+        }
+    }
+    renderCart();
+}
+function removeItem(idx) {
+    const item = cart[idx];
+    if(item) {
+        adjustProductCardStock(item.producto_id, -item.cantidad);
+        cart.splice(idx, 1);
+        renderCart();
+    }
+}
+function clearCart() {
+    cart.forEach(item => adjustProductCardStock(item.producto_id, -item.cantidad));
+    cart = [];
+    renderCart();
+}
+
+// Client search for POS
+const cSearch = document.getElementById('clienteSearchPOS');
+const cResults = document.getElementById('clienteResultsPOS');
+let cTimeout;
+cSearch.addEventListener('input', function() {
+    clearTimeout(cTimeout);
+    const q = this.value.trim();
+    if(q.length < 2) { cResults.innerHTML=''; return; }
+    cTimeout = setTimeout(async () => {
+        const res = await fetch(`/api/clientes/search/?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        cResults.innerHTML = '';
+        data.results.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'attendance-item';
+            item.style.cssText = 'cursor:pointer;padding:6px 0';
+            item.addEventListener('click', () => selectPOSClient(c.id, c.nombre));
+
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-person text-accent';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.style.cssText = 'color:#f0f4ff;font-weight:600;font-size:13px;';
+            nameSpan.textContent = c.nombre + ' ';
+
+            const phoneSpan = document.createElement('span');
+            phoneSpan.style.cssText = 'color:#c5cfe8;font-weight:400;';
+            phoneSpan.textContent = '(' + (c.telefono || '-') + ')';
+            nameSpan.appendChild(phoneSpan);
+
+            item.append(icon, nameSpan);
+            cResults.appendChild(item);
+        });
+    }, 300);
+});
+function selectPOSClient(id, nombre) {
+    selectedClientId = id;
+    document.getElementById('selectedClientName').textContent = nombre;
+    document.getElementById('selectedClient').classList.remove('d-none');
+    cResults.innerHTML = ''; cSearch.value = '';
+}
+function clearClient() { selectedClientId = null; document.getElementById('selectedClient').classList.add('d-none'); }
+
+async function finalizarVenta() {
+    if(cart.length === 0) { showToast('El carrito está vacío', 'error'); return; }
+    const items = [];
+    cart.forEach(i => {
+        for (let u = 0; u < i.cantidad; u++) {
+            items.push({...i, cantidad: 1, subtotal: i.precio_unitario, costo_subtotal: i.costo_unitario});
+        }
+    });
+    const payload = {
+        items: items,
+        metodo_pago: document.getElementById('metodoPago').value,
+        cliente_id: selectedClientId,
+        notas: '',
+    };
+    try {
+        const res = await fetch('/api/procesar/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if(data.success) {
+            showToast(`✅ Venta #${data.venta_id} registrada — Total: Bs.${data.total}`);
+            cart = []; selectedClientId = null; renderCart();
+            document.getElementById('selectedClient').classList.add('d-none');
+        } else {
+            showToast('❌ Error: ' + data.error, 'error');
+        }
+    } catch(e) { showToast('Error de conexión: ' + e.message, 'error'); }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if(document.cookie) {
+        document.cookie.split(';').forEach(cookie => {
+            cookie = cookie.trim();
+            if(cookie.startsWith(name + '=')) cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        });
+    }
+    return cookieValue;
+}
+
+// Product search filter
+document.getElementById('prodSearch').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.product-card').forEach(card => {
+        const name = card.querySelector('.product-name').textContent.toLowerCase();
+        card.style.display = name.includes(q) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

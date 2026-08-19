@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Caja #{{ caja.pk }} - GYM ZT SIS{% endblock %}
+{% block page_title %}Detalle de Caja{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="section-title mb-0"><i class="bi bi-safe-fill text-accent"></i> Caja #{{ caja.pk }} — {{ caja.fecha_apertura|date:"d/m/Y" }}</h4>
+        {% if caja.observacion %}<small style="color:#888;">{{ caja.observacion }}</small>{% endif %}
+    </div>
+    <a href="{% url 'caja:historial' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Historial</a>
+</div>
+
+<!-- Resumen KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="bi bi-safe-fill"></i></div>
+            <div><div class="kpi-value">Bs.{{ resumen.monto_inicial|floatformat:2 }}</div><div class="kpi-label">Monto Inicial</div></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="bi bi-arrow-up"></i></div>
+            <div><div class="kpi-value text-green">Bs.{{ resumen.total_ingresos|floatformat:2 }}</div><div class="kpi-label">Ingresos</div></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon red"><i class="bi bi-arrow-down"></i></div>
+            <div><div class="kpi-value text-red">Bs.{{ resumen.total_egresos|floatformat:2 }}</div><div class="kpi-label">Egresos</div></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="bi bi-wallet2"></i></div>
+            <div><div class="kpi-value text-accent">Bs.{{ resumen.monto_esperado|floatformat:2 }}</div><div class="kpi-label">Total Final</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Desglose por método de pago -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-pie-chart text-accent"></i> Desglose de Ingresos</div>
+            <div class="card-body">
+                <table style="width:100%;color:#c5cfe8;font-size:14px;">
+                    <tr>
+                        <td style="padding:8px 4px;"><i class="bi bi-cash-coin" style="color:#28a745;"></i> Efectivo</td>
+                        <td style="text-align:right;font-weight:600;" class="text-green">Bs.{{ resumen.ingresos_efectivo|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 4px;"><i class="bi bi-qr-code" style="color:#28a745;"></i> QR</td>
+                        <td style="text-align:right;font-weight:600;" class="text-green">Bs.{{ resumen.ingresos_qr|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 4px;"><i class="bi bi-bank" style="color:#28a745;"></i> Transferencia</td>
+                        <td style="text-align:right;font-weight:600;" class="text-green">Bs.{{ resumen.ingresos_transferencia|floatformat:2 }}</td>
+                    </tr>
+                    <tr><td colspan="2"><hr style="border-color:rgba(255,255,255,0.1);margin:4px 0;"></td></tr>
+                    <tr>
+                        <td style="padding:8px 4px;"><i class="bi bi-arrow-down-circle" style="color:#dc3545;"></i> Egresos / Gastos</td>
+                        <td style="text-align:right;font-weight:600;" class="text-red">-Bs.{{ resumen.total_egresos|floatformat:2 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-info-circle text-accent"></i> Info</div>
+            <div class="card-body" style="font-size:14px;color:#c5cfe8;">
+                <div class="mb-2"><span style="color:#888;">Usuario:</span> <strong style="color:#f0f4ff;">{{ caja.usuario.username|default:"-" }}</strong></div>
+                <div class="mb-2"><span style="color:#888;">Apertura:</span> <strong style="color:#f0f4ff;">{{ caja.fecha_apertura|date:"d/m/Y H:i" }}</strong></div>
+                <div class="mb-2"><span style="color:#888;">Cierre:</span> <strong style="color:#f0f4ff;">{{ caja.fecha_cierre|date:"d/m/Y H:i"|default:"—" }}</strong></div>
+                <div class="mb-2"><span style="color:#888;">Estado:</span>
+                    <span class="chip {% if caja.estado == 'abierta' %}chip-green{% else %}chip-red{% endif %}">{{ caja.get_estado_display }}</span>
+                </div>
+                <hr style="border-color:rgba(255,255,255,0.1);">
+                <div style="font-size:16px;text-align:center;">
+                    <div style="color:#888;font-size:12px;margin-bottom:4px;">TOTAL FINAL</div>
+                    <div class="fw-bold text-accent" style="font-size:22px;">Bs.{{ resumen.monto_esperado|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Movimientos -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-clock-history text-accent"></i> Movimientos del día ({{ movimientos|length }})
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Hora</th><th>Tipo</th><th>Descripción</th><th>Usuario</th><th>Monto</th></tr>
+            </thead>
+            <tbody>
+            {% for m in movimientos %}
+            <tr>
+                <td>{{ m.fecha|date:"H:i" }}</td>
+                <td><span class="chip {% if m.tipo == 'ingreso' %}chip-green{% else %}chip-red{% endif %}">{{ m.get_tipo_display }}</span></td>
+                <td>{{ m.descripcion }}</td>
+                <td><span style="color:#f0f4ff;"><i class="bi bi-person"></i> {{ m.usuario.username|default:"-" }}</span></td>
+                <td class="fw-bold {% if m.tipo == 'ingreso' %}text-green{% else %}text-red{% endif %}">
+                    {% if m.tipo == 'egreso' %}-{% endif %}Bs.{{ m.monto|floatformat:2 }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-muted text-center py-3">Sin movimientos</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block title %}Reportes - GYM ZT SIS{% endblock %}
+{% block page_title %}Reportes{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-file-earmark-bar-graph-fill text-accent"></i> {{ titulo|default:"Reportes" }}</h4>
+    <a href="{% url 'reportes:pdf' %}?tipo={{ tipo }}&fecha={{ fecha }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&mes={{ mes }}&categoria={{ categoria }}"
+       class="btn btn-danger btn-sm"><i class="bi bi-file-pdf"></i> Descargar PDF</a>
+</div>
+
+<!-- FILTROS DINÁMICOS -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" id="reporteForm" class="row g-3 align-items-end">
+            <!-- Tipo de reporte -->
+            <div class="col-md-3">
+                <label class="form-label small fw-600" style="color:#d0d8ee;">Tipo de Reporte</label>
+                <select name="tipo" id="tipoSelect" class="form-select" onchange="actualizarFiltros()">
+                    <option value="diario" {% if tipo == 'diario' %}selected{% endif %}>📅 Diario — Elegir un día</option>
+                    <option value="semanal" {% if tipo == 'semanal' %}selected{% endif %}>📆 Semanal — Rango de días</option>
+                    <option value="mensual" {% if tipo == 'mensual' %}selected{% endif %}>🗓️ Mensual — Elegir mes</option>
+                </select>
+            </div>
+
+            <!-- DIARIO: selector de día -->
+            <div class="col-md-4" id="filtro_diario" style="display:none;">
+                <label class="form-label small" style="color:#d0d8ee;">Día a consultar</label>
+                <input type="date" name="fecha" value="{{ fecha }}" class="form-control">
+            </div>
+
+            <!-- SEMANAL: rango de fechas -->
+            <div class="col-md-4" id="filtro_semanal" style="display:none;">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small" style="color:#d0d8ee;">Desde</label>
+                        <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small" style="color:#d0d8ee;">Hasta</label>
+                        <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- MENSUAL: selector de mes -->
+            <div class="col-md-4" id="filtro_mensual" style="display:none;">
+                <label class="form-label small" style="color:#d0d8ee;">Mes a consultar</label>
+                <input type="month" name="mes" value="{{ mes }}" class="form-control">
+            </div>
+
+            <!-- FILTRO DE CATEGORÍA -->
+            <div class="col-md-3">
+                <label class="form-label small fw-600" style="color:#d0d8ee;">Filtrar por Área</label>
+                <select name="categoria" class="form-select">
+                    <option value="all" {% if categoria == 'all' %}selected{% endif %}>🟢 Todo General</option>
+                    <option value="gym" {% if categoria == 'gym' %}selected{% endif %}>🏋️ Gym (Membresías)</option>
+                    <option value="snacks" {% if categoria == 'snacks' %}selected{% endif %}>🍫 Snacks</option>
+                    <option value="suplementos" {% if categoria == 'suplementos' %}selected{% endif %}>💊 Suplementos</option>
+                    <option value="egresos" {% if categoria == 'egresos' %}selected{% endif %}>📉 Egresos (Gastos)</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- KPIs RESULTADO -->
+<div class="row g-3 mb-3">
+    {% if categoria != 'egresos' %}
+    <div class="col-6 {% if categoria == 'all' %}col-md-4{% else %}col-md-6{% endif %}">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="bi bi-cash-stack"></i></div>
+            <div>
+                <div class="kpi-value text-green">Bs.{{ total_ingresos|floatformat:0 }}</div>
+                <div class="kpi-label">Ingresos Totales {% if categoria != 'all' %}({{ categoria|title }}){% endif %}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if categoria == 'all' or categoria == 'egresos' %}
+    <div class="col-6 {% if categoria == 'all' %}col-md-4{% else %}col-md-12{% endif %}">
+        <div class="kpi-card">
+            <div class="kpi-icon red"><i class="bi bi-graph-down-arrow"></i></div>
+            <div>
+                <div class="kpi-value text-red">Bs.{{ total_egresos|floatformat:0 }}</div>
+                <div class="kpi-label">Egresos Totales</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if categoria != 'egresos' %}
+    <div class="col-6 {% if categoria == 'all' %}col-md-4{% else %}col-md-6{% endif %}">
+        <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="bi bi-trophy-fill"></i></div>
+            <div>
+                <div class="kpi-value text-accent">Bs.{{ ganancia_neta|floatformat:0 }}</div>
+                <div class="kpi-label">Ganancia Neta</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if categoria == 'all' %}
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+        <div class="kpi-card" style="padding: 12px; flex-direction: column; align-items: flex-start;">
+            <div class="kpi-label" style="font-size:0.8rem">Ingresos Gym (Membresías)</div>
+            <div class="kpi-value text-accent" style="font-size:1.2rem">Bs.{{ ganancias_detalle.ingresos_gym|floatformat:0 }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="kpi-card" style="padding: 12px; flex-direction: column; align-items: flex-start;">
+            <div class="kpi-label" style="font-size:0.8rem">Ventas Snacks</div>
+            <div class="kpi-value text-accent" style="font-size:1.2rem">Bs.{{ ganancias_detalle.ingresos_snacks|floatformat:0 }}</div>
+            <div style="font-size:0.7rem; color:var(--text-muted)">Ganancia neta: Bs.{{ ganancias_detalle.ganancia_snacks|floatformat:0 }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="kpi-card" style="padding: 12px; flex-direction: column; align-items: flex-start;">
+            <div class="kpi-label" style="font-size:0.8rem">Ventas Suplementos</div>
+            <div class="kpi-value text-accent" style="font-size:1.2rem">Bs.{{ ganancias_detalle.ingresos_suplementos|floatformat:0 }}</div>
+            <div style="font-size:0.7rem; color:var(--text-muted)">Ganancia neta: Bs.{{ ganancias_detalle.ganancia_suplementos|floatformat:0 }}</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if categoria == 'all' or categoria == 'gym' %}
+<div class="row g-3 mb-4">
+    {% if categoria == 'all' %}
+    <div class="col-6 col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon {% if utilidad >= 0 %}green{% else %}red{% endif %}">
+                <i class="bi bi-calculator-fill"></i>
+            </div>
+            <div>
+                <div class="kpi-value {% if utilidad >= 0 %}text-green{% else %}text-red{% endif %}">
+                    Bs.{{ utilidad|floatformat:0 }}
+                </div>
+                <div class="kpi-label">Utilidad Neta</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-6 {% if categoria == 'gym' %}col-md-6{% else %}col-md-4{% endif %}">
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="bi bi-person-check"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_asistencias }}</div>
+                <div class="kpi-label">Asistencias</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 {% if categoria == 'gym' %}col-md-6{% else %}col-md-4{% endif %}">
+        <div class="kpi-card">
+            <div class="kpi-icon orange"><i class="bi bi-person-plus"></i></div>
+            <div>
+                <div class="kpi-value">{{ clientes_nuevos }}</div>
+                <div class="kpi-label">Clientes Nuevos</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- TABLAS -->
+<div class="row g-3">
+    {% if categoria != 'egresos' %}
+    <div class="{% if categoria == 'all' %}col-lg-6{% else %}col-lg-12{% endif %}">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-arrow-up-circle text-green"></i> Ventas del Período</div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>#</th><th>Fecha</th><th>Detalle</th><th>Usuario</th><th>Total</th><th>Método</th></tr></thead>
+                    <tbody>
+                    {% for v in ventas %}
+                    <tr>
+                        <td class="text-muted">{{ v.pk }}</td>
+                        <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+                        <td style="color:#f0f4ff;">{{ v.detalles.first.descripcion|default:"Venta"|truncatechars:30 }}</td>
+                        <td><span style="color: #f0f4ff;"><i class="bi bi-person"></i> {{ v.usuario.username|default:'-' }}</span></td>
+                        <td class="text-green fw-bold">Bs.{{ v.total }}</td>
+                        <td><span class="chip chip-orange">{{ v.get_metodo_pago_display }}</span></td>
+                    </tr>
+                    {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Sin ventas en el período</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if categoria == 'all' or categoria == 'egresos' %}
+    <div class="{% if categoria == 'all' %}col-lg-6{% else %}col-lg-12{% endif %}">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-arrow-down-circle text-red"></i> Egresos del Período</div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>Fecha</th><th>Usuario</th><th>Descripción</th><th>Monto</th></tr></thead>
+                    <tbody>
+                    {% for e in egresos %}
+                    <tr>
+                        <td>{{ e.fecha|date:"d/m/Y" }}</td>
+                        <td><span style="color: #f0f4ff;"><i class="bi bi-person"></i> {{ e.usuario.username|default:'-' }}</span></td>
+                        <td>{{ e.descripcion|default:"—"|truncatechars:30 }}</td>
+                        <td class="text-red fw-bold">Bs.{{ e.monto }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="4" class="text-muted text-center py-3">Sin egresos en el período</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function actualizarFiltros() {
+    const tipo = document.getElementById('tipoSelect').value;
+    document.getElementById('filtro_diario').style.display = (tipo === 'diario') ? 'block' : 'none';
+    document.getElementById('filtro_semanal').style.display = (tipo === 'semanal') ? 'block' : 'none';
+    document.getElementById('filtro_mensual').style.display = (tipo === 'mensual') ? 'block' : 'none';
+}
+// Inicializar al cargar
+actualizarFiltros();
+</script>
+{% endblock %}

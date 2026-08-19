@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Venta #{{ venta.pk }} - GYM ZT SIS{% endblock %}
+{% block page_title %}Detalle Venta #{{ venta.pk }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-receipt text-accent"></i> Venta #{{ venta.pk }}</div>
+            <div class="card-body" style="color:#fff;">
+                <div class="row g-3">
+                    <div class="col-md-4"><strong>Fecha:</strong><br>{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+                    <div class="col-md-4"><strong>Cliente:</strong><br>{{ venta.cliente.nombre|default:"Ocasional" }}</div>
+                    <div class="col-md-4"><strong>Método:</strong><br><span class="chip chip-blue">{{ venta.get_metodo_pago_display }}</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <div class="card-body p-0">
+                <table class="table mb-0" style="color:#fff;">
+                    <thead><tr><th>Item</th><th>Cant.</th><th>P. Unit.</th><th>Subtotal</th></tr></thead>
+                    <tbody>
+                    {% for d in detalles %}
+                    <tr><td>{{ d.descripcion }}</td><td>{{ d.cantidad }}</td><td>Bs.{{ d.precio_unitario }}</td><td class="text-green">Bs.{{ d.subtotal }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><td colspan="3" class="text-end fw-bold">Total:</td><td class="text-green fw-bold" style="font-size:18px">Bs.{{ venta.total }}</td></tr>
+                        <tr><td colspan="3" class="text-end">Costo:</td><td>Bs.{{ venta.costo_total }}</td></tr>
+                        <tr><td colspan="3" class="text-end fw-bold">Ganancia:</td><td class="text-accent fw-bold">Bs.{{ venta.ganancia }}</td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <a href="{% url 'ventas:lista' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    </div>
+</div>
+{% endblock %}

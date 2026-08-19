@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GYM ZT SIS</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+    p { color: #94a3b8; font-size: 0.9rem; margin: 0 0 1.5rem; }
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid rgba(148, 163, 184, 0.25);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hint { margin-top: 1.25rem; font-size: 0.75rem; color: #64748b; max-width: 320px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>GYM ZT SIS</h1>
+    <p>Iniciando servidor local y base de datos…</p>
+    <div class="spinner" role="status" aria-label="Cargando"></div>
+    <p class="hint">La primera ejecución puede tardar mientras se aplican migraciones y se prepara PostgreSQL.</p>
+  </div>
+</body>
+</html>

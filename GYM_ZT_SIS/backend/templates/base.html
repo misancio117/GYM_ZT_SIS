@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GYM ZT SIS{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'css/gym.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <i class="bi bi-lightning-charge-fill"></i>
+        <span>GYM ZT SIS</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'dashboard:index' %}" class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-fill"></i><span>Dashboard</span>
+        </a>
+        <div class="nav-section">OPERACIONES</div>
+        <a href="{% url 'asistencia:registro' %}" class="nav-link {% if request.resolver_match.app_name == 'asistencia' %}active{% endif %}">
+            <i class="bi bi-person-check-fill"></i><span>Asistencia</span>
+        </a>
+        <a href="{% url 'ventas:pos' %}" class="nav-link {% if request.resolver_match.app_name == 'ventas' %}active{% endif %}">
+            <i class="bi bi-cart-fill"></i><span>Punto de Venta</span>
+        </a>
+        <a href="{% url 'caja:caja' %}" class="nav-link {% if request.resolver_match.app_name == 'caja' %}active{% endif %}">
+            <i class="bi bi-safe-fill"></i><span>Caja</span>
+        </a>
+        <div class="nav-section">GESTIÓN</div>
+        <a href="{% url 'clientes:lista' %}" class="nav-link {% if request.resolver_match.app_name == 'clientes' %}active{% endif %}">
+            <i class="bi bi-people-fill"></i><span>Clientes</span>
+        </a>
+        <a href="{% url 'membresias:lista' %}" class="nav-link {% if request.resolver_match.app_name == 'membresias' %}active{% endif %}">
+            <i class="bi bi-credit-card-fill"></i><span>Membresías</span>
+        </a>
+        {% if user.es_admin %}
+        <a href="{% url 'inventario:lista' %}?cat=snack" class="nav-link {% if request.resolver_match.app_name == 'inventario' and request.GET.cat != 'suplemento' %}active{% endif %}">
+            <i class="bi bi-cup-straw"></i><span>Inventario Snacks</span>
+        </a>
+        <a href="{% url 'inventario:lista' %}?cat=suplemento" class="nav-link {% if request.resolver_match.app_name == 'inventario' and request.GET.cat == 'suplemento' %}active{% endif %}">
+            <i class="bi bi-capsule"></i><span>Inventario Suplementos</span>
+        </a>
+        {% endif %}
+        <div class="nav-section">FINANZAS</div>
+        {% if user.es_admin %}
+        <a href="{% url 'contabilidad:dashboard' %}" class="nav-link {% if request.resolver_match.app_name == 'contabilidad' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-calculator-fill"></i><span>Contabilidad</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'contabilidad:egresos_lista' %}" class="nav-link {% if request.resolver_match.app_name == 'contabilidad' and request.resolver_match.url_name == 'egresos_lista' %}active{% endif %}">
+            <i class="bi bi-arrow-down-circle-fill"></i><span>Egresos</span>
+        </a>
+        {% if user.es_admin %}
+        <a href="{% url 'reportes:reportes' %}" class="nav-link {% if request.resolver_match.app_name == 'reportes' %}active{% endif %}">
+            <i class="bi bi-file-earmark-bar-graph-fill"></i><span>Reportes</span>
+        </a>
+        {% endif %}
+        {% if user.es_admin %}
+        <div class="nav-section">ADMINISTRACIÓN</div>
+        <a href="{% url 'core:usuarios_lista' %}" class="nav-link {% if request.resolver_match.namespace == 'core' %}active{% endif %}">
+            <i class="bi bi-shield-lock-fill"></i><span>Usuarios</span>
+        </a>
+        <a href="{% url 'core:auditoria' %}" class="nav-link">
+            <i class="bi bi-journal-text"></i><span>Auditoría</span>
+        </a>
+        {% endif %}
+    </nav>
+</div>
+
+<!-- MAIN WRAPPER -->
+<div class="main-wrapper">
+    <!-- TOPBAR -->
+    <nav class="topbar">
+        <button class="btn-toggle-sidebar" id="sidebarToggle">
+            <i class="bi bi-list"></i>
+        </button>
+        <div class="topbar-title">{% block page_title %}{% endblock %}</div>
+        <div class="topbar-actions">
+            <!-- Quick action buttons -->
+            <a href="{% url 'asistencia:registro' %}" class="btn btn-sm btn-primary me-1" title="Registrar Entrada">
+                <i class="bi bi-person-plus-fill"></i>
+            </a>
+            <a href="{% url 'ventas:pos' %}" class="btn btn-sm btn-success me-1" title="Nueva Venta">
+                <i class="bi bi-cart-plus-fill"></i>
+            </a>
+            <!-- Alerts bell -->
+            <div class="dropdown me-2">
+                <button class="btn btn-sm btn-outline-warning dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-bell-fill"></i>
+                    {% if alertas_count %}<span class="badge bg-danger rounded-pill">{{ alertas_count }}</span>{% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end alert-dropdown">
+                    <li><h6 class="dropdown-header">Alertas Activas</h6></li>
+                    {% for a in alertas_activas %}
+                    <li>
+                        <a class="dropdown-item alert-item {% if a.tipo == 'stock_bajo' %}alert-item-rojo{% elif a.tipo == 'membresia_por_vencer' %}alert-item-amarillo{% elif a.tipo == 'membresia_vencida' %}alert-item-rojo{% endif %}" href="{% url 'alertas:lista' %}">
+                            {% if a.tipo == 'stock_bajo' %}📦
+                            {% elif a.tipo == 'membresia_vencida' %}❌
+                            {% elif a.tipo == 'membresia_por_vencer' %}⚠️
+                            {% else %}ℹ️{% endif %}
+                            <small>{{ a.mensaje|truncatechars:50 }}</small>
+                        </a>
+                    </li>
+                    {% empty %}<li><span class="dropdown-item text-muted">Sin alertas activas</span></li>{% endfor %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-center" href="{% url 'alertas:lista' %}">Ver todas</a></li>
+                </ul>
+            </div>
+            <!-- User menu -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle"></i> {{ user.get_full_name|default:user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                    <li><span class="dropdown-item-text small" style="color:#c5cfe8;">{{ user.get_rol_display }}</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'core:logout' %}"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="content">
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+    // Sidebar toggle
+    const toggle = document.getElementById('sidebarToggle');
+    if(toggle) toggle.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.querySelector('.main-wrapper').classList.toggle('expanded');
+    });
+    // Auto-dismiss alerts after 4s (only if not focused by user)
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert-dismissible');
+        if (alerts.length > 0) {
+            alerts.forEach(el => {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+                if (bsAlert) bsAlert.close();
+            });
+        }
+    }, 4000);
+
+    // Global Password Toggle Logic
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.toggle-password')) {
+            e.preventDefault(); // Evitar que el botón dispare submits accidentales
+            const btn = e.target.closest('.toggle-password');
+            const container = btn.closest('.input-group');
+            const input = container.querySelector('input');
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+            // Retornar el foco al input para que el usuario siga escribiendo
+            input.focus();
+        }
+    });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

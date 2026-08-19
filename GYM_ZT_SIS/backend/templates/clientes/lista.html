@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Clientes - GYM ZT SIS{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-people-fill text-accent"></i> Gestión de Clientes</h4>
+    <a href="{% url 'clientes:crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nuevo Cliente</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre o teléfono...">
+            </div>
+            <div class="col-md-3">
+                <select name="membresia" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="sin" {% if membresia_filter == 'sin' %}selected{% endif %}>Sin membresía</option>
+                    {% for m in membresias_disponibles %}
+                    <option value="{{ m.pk }}" {% if membresia_filter == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Buscar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover table-striped mb-0">
+            <thead><tr><th>Foto</th><th>Nombre</th><th>Ubicación</th><th>Teléfono</th><th>Creado Por</th><th>Estado</th><th>Membresía</th><th>Acciones</th></tr></thead>
+            <tbody>
+            {% for c in clientes %}
+            <tr>
+                <td>
+                    <div style="width:36px;height:36px;position:relative;">
+                        {% if c.foto %}
+                        <img src="{{ c.foto.url }}" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                             style="width:36px;height:36px;border-radius:50%;object-fit:cover;position:absolute;top:0;left:0;z-index:2;">
+                        {% endif %}
+                        <div class="{% if c.foto %}d-none{% else %}d-flex{% endif %}" 
+                             style="width:36px;height:36px;border-radius:50%;background:var(--bg-card2);align-items:center;justify-content:center;position:absolute;top:0;left:0;z-index:1;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                    </div>
+                </td>
+                <td class="fw-semibold">{{ c.nombre }}</td>
+                <td>{{ c.ubicacion|default:"-" }}</td>
+                <td>{{ c.telefono|default:"-" }}</td>
+                <td><span style="color:#f0f4ff; font-size: 0.9em"><i class="bi bi-person"></i> {{ c.usuario.username|default:'-' }}</span></td>
+                <td><span class="chip {% if c.estado == 'activo' %}chip-green{% else %}chip-red{% endif %}">{{ c.get_estado_display }}</span></td>
+                <td>
+                    {% with mem=c.get_membresia_activa %}
+                    {% if mem %}<span class="chip chip-green">{{ mem.membresia.nombre }}</span>
+                    {% else %}<span class="chip chip-red">Sin membresía</span>{% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    <a href="{% url 'clientes:detalle' c.pk %}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>
+                    <a href="{% url 'clientes:editar' c.pk %}" class="btn btn-sm btn-outline-warning" title="Editar"><i class="bi bi-pencil"></i></a>
+                    {% if user.es_admin %}
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-cliente" 
+                            data-pk="{{ c.pk }}" data-nombre="{{ c.nombre }}"
+                            title="Eliminar Cliente">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}<tr><td colspan="8" class="text-center text-muted py-4">No se encontraron clientes</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if is_paginated %}
+<nav class="mt-3"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&membresia={{ membresia_filter }}">&laquo;</a></li>{% endif %}
+    <li class="page-item active"><a class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</a></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&membresia={{ membresia_filter }}">&raquo;</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+
+<!-- Modal de Eliminación Segura -->
+<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius);">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title text-red"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="deleteClientForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p id="deleteMessage" class="text-primary mb-3"></p>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña de Administrador</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-shield-lock"></i></span>
+                            <input type="password" name="admin_password" class="form-control" placeholder="Introduce tu clave para confirmar" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button"><i class="bi bi-eye"></i></button>
+                        </div>
+                        <div class="form-text mt-2">Esta acción borrará permanentemente al cliente y sus registros asociados (membresías, asistencias).</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash-fill"></i> Eliminar Definitivamente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.btn-delete-cliente').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pk = this.dataset.pk;
+            const nombre = this.dataset.nombre;
+            const form = document.querySelector('#deleteClientForm');
+            const message = document.querySelector('#deleteMessage');
+            
+            // Set action URL dynamically
+            form.action = `/clientes/${pk}/eliminar/`;
+            
+            // Set personalized message
+            const nombreStrong = document.createElement('strong');
+            nombreStrong.textContent = nombre;
+            message.innerHTML = 'Hola <strong>{{ user.username }}</strong>, para eliminar al cliente ';
+            message.appendChild(nombreStrong);
+            message.appendChild(document.createTextNode(' introduzca su contraseña para confirmar:'));
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('deleteClientModal'));
+            modal.show();
+        });
+    });
+</script>
+{% endblock %}

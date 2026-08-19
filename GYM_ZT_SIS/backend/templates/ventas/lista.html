@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Ventas - GYM ZT SIS{% endblock %}
+{% block page_title %}Historial de Ventas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="section-title mb-0"><i class="bi bi-receipt-cutoff text-accent"></i> Ventas</h4>
+    <a href="{% url 'ventas:pos' %}" class="btn btn-primary"><i class="bi bi-cart-plus"></i> Nueva Venta</a>
+</div>
+<form method="get" class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label mb-1" style="font-size:12px;color:#c5cfe8;">Fecha</label>
+                <input type="date" name="fecha" value="{{ fecha_filter }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-1" style="font-size:12px;color:#c5cfe8;">Método de Pago</label>
+                <select name="metodo" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="efectivo" {% if metodo_filter == 'efectivo' %}selected{% endif %}>Efectivo</option>
+                    <option value="qr" {% if metodo_filter == 'qr' %}selected{% endif %}>QR</option>
+                    <option value="transferencia" {% if metodo_filter == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                </select>
+            </div>
+            <div class="col-auto d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search"></i> Filtrar</button>
+                {% if fecha_filter or metodo_filter %}
+                <a href="{% url 'ventas:lista' %}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+                {% endif %}
+            </div>
+            {% if fecha_filter %}
+            <div class="col-auto ms-2" style="color:#c5cfe8;font-size:13px;">
+                <i class="bi bi-info-circle"></i> {{ total_filtrado }} venta{{ total_filtrado|pluralize }} encontrada{{ total_filtrado|pluralize }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</form>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>#</th><th>Fecha</th><th>Detalle</th><th>Usuario</th><th>Total</th><th>Costo</th><th>Ganancia</th><th>Pago</th><th></th></tr></thead>
+            <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td>{{ v.pk }}</td>
+                <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+                <td style="color:#f0f4ff;">{{ v.detalles.first.descripcion|default:"Venta"|truncatechars:40 }}</td>
+                <td><span style="color: #f0f4ff;"><i class="bi bi-person"></i> {{ v.usuario.username|default:'-' }}</span></td>
+                <td class="text-green fw-bold">Bs.{{ v.total }}</td>
+                <td class="text-muted">Bs.{{ v.costo_total }}</td>
+                <td class="text-accent fw-bold">Bs.{{ v.ganancia }}</td>
+                <td><span class="chip chip-blue">{{ v.get_metodo_pago_display }}</span></td>
+                <td><a href="{% url 'ventas:detalle' v.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% empty %}<tr><td colspan="9" class="text-muted text-center py-3">Sin ventas</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if is_paginated %}
+<nav class="mt-3"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>{% endif %}
+    <li class="page-item active"><a class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</a></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}

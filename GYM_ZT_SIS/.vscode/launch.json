@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django: runserver (backend)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver", "127.0.0.1:8000"],
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "GYM_ZT_SIS_BACKEND_ROOT": "${workspaceFolder}/backend"
+      },
+      "django": true,
+      "justMyCode": true
+    }
+  ]
+}

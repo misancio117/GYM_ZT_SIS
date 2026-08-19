@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Asignaciones - GYM ZT SIS{% endblock %}
+{% block page_title %}Membresías Asignadas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-list-check text-accent"></i> Membresías Asignadas</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'membresias:lista' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Planes</a>
+        <a href="{% url 'membresias:asignar' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Asignar</a>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2">
+            <div class="col-md-4">
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="activa" {% if estado_filter == 'activa' %}selected{% endif %}>Activas</option>
+                    <option value="expirada" {% if estado_filter == 'expirada' %}selected{% endif %}>Expiradas</option>
+                </select>
+            </div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary"><i class="bi bi-filter"></i> Filtrar</button></div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Cliente</th><th>Plan</th><th>Asignado Por</th><th>Inicio</th><th>Fin</th><th>Días Rest.</th><th>Estado</th></tr></thead>
+            <tbody>
+            {% for a in asignaciones %}
+            <tr>
+                <td class="fw-semibold">{{ a.cliente.nombre }}</td>
+                <td>{{ a.membresia.nombre }}</td>
+                <td><span style="color:#f0f4ff;font-size:0.9em"><i class="bi bi-person"></i> {{ a.usuario.username|default:'-' }}</span></td>
+                <td>{{ a.fecha_inicio|date:"d/m/Y" }}</td>
+                <td>{{ a.fecha_fin|date:"d/m/Y" }}</td>
+                <td>{{ a.dias_restantes }}</td>
+                <td>
+                    {% if a.estado == 'activa' %}<span class="chip {% if a.por_vencer %}chip-orange{% else %}chip-green{% endif %}">{% if a.por_vencer %}Por Vencer{% else %}Activa{% endif %}</span>
+                    {% else %}<span class="chip chip-red">{{ a.get_estado_display }}</span>{% endif %}
+                </td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="text-muted text-center py-3">Sin asignaciones</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

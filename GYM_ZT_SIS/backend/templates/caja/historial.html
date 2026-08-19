@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Historial Caja - GYM ZT SIS{% endblock %}
+{% block page_title %}Historial de Cajas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-clock-history text-accent"></i> Historial de Cajas</h4>
+    <a href="{% url 'caja:caja' %}" class="btn btn-outline-primary"><i class="bi bi-arrow-left"></i> Caja Actual</a>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>#</th><th>Apertura</th><th>Cierre</th><th>M. Inicial</th><th>M. Final</th><th>Usuario</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+            {% for c in cajas %}
+            <tr>
+                <td>{{ c.pk }}</td>
+                <td>{{ c.fecha_apertura|date:"d/m/Y H:i" }}</td>
+                <td>{{ c.fecha_cierre|date:"d/m/Y H:i"|default:"-" }}</td>
+                <td>Bs.{{ c.monto_inicial }}</td>
+                <td class="fw-bold">Bs.{{ c.monto_final|default:"—" }}</td>
+                <td>{{ c.usuario.username|default:"-" }}</td>
+                <td><span class="chip {% if c.estado == 'abierta' %}chip-green{% else %}chip-red{% endif %}">{{ c.get_estado_display }}</span></td>
+                <td><a href="{% url 'caja:detalle' c.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% empty %}<tr><td colspan="8" class="text-muted text-center py-3">Sin registros</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Alertas - GYM ZT SIS{% endblock %}
+{% block page_title %}Alertas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="section-title mb-0"><i class="bi bi-bell-fill text-accent"></i> Alertas del Sistema</h4>
+    <form method="post" action="{% url 'alertas:generar' %}">{% csrf_token %}<button class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Actualizar</button></form>
+</div>
+<div class="row g-3">
+{% for a in alertas %}
+<div class="col-12">
+    <div class="card" style="{% if a.tipo == 'stock_bajo' or a.tipo == 'membresia_vencida' %}border-left:4px solid #fa5252;{% elif a.tipo == 'membresia_por_vencer' %}border-left:4px solid #f59e0b;{% endif %}">
+        <div class="card-body d-flex align-items-center gap-3" style="{% if a.tipo == 'stock_bajo' or a.tipo == 'membresia_vencida' %}background:rgba(250,82,82,0.08);{% elif a.tipo == 'membresia_por_vencer' %}background:rgba(245,158,11,0.08);{% endif %}">
+            {% if a.tipo == 'stock_bajo' %}<div class="kpi-icon red" style="font-size:22px;">📦</div>
+            {% elif a.tipo == 'membresia_vencida' %}<div class="kpi-icon red" style="font-size:22px;">❌</div>
+            {% elif a.tipo == 'membresia_por_vencer' %}<div class="kpi-icon orange" style="font-size:22px;">⚠️</div>
+            {% else %}<div class="kpi-icon blue" style="font-size:22px;">ℹ️</div>{% endif %}
+            <div class="flex-grow-1">
+                <div class="fw-semibold" style="{% if a.tipo == 'stock_bajo' or a.tipo == 'membresia_vencida' %}color:#ff8787;{% elif a.tipo == 'membresia_por_vencer' %}color:#fcd34d;{% else %}color:#f0f4ff;{% endif %}">{{ a.get_tipo_display }}</div>
+                <div style="color:#d0d8ee;font-size:13px;">{{ a.mensaje }}</div>
+                <small style="color:#9aa5b8;">{{ a.fecha|date:"d/m/Y H:i" }}</small>
+            </div>
+            <span class="chip {% if a.estado == 'activa' %}chip-orange{% elif a.estado == 'leida' %}chip-blue{% else %}chip-green{% endif %}">{{ a.get_estado_display }}</span>
+            {% if a.estado == 'activa' %}
+            <form method="post" action="{% url 'alertas:marcar_leida' a.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary"><i class="bi bi-check"></i></button></form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}<div class="col-12 text-center text-muted py-5"><i class="bi bi-check-circle" style="font-size:48px"></i><p class="mt-2">Sin alertas activas</p></div>{% endfor %}
+</div>
+{% endblock %}
