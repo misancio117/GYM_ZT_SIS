@@ -24,11 +24,25 @@ class Cliente(models.Model):
     def __str__(self):
         return self.nombre
 
-    def get_membresia_activa(self):
+    def get_membresia_activa(self, disciplina=None):
         if hasattr(self, '_membresias_prefetch'):
             lst = self._membresias_prefetch
+            if disciplina:
+                for m in lst:
+                    if m.membresia.disciplina == disciplina:
+                        return m
+                return None
             return lst[0] if lst else None
         from apps.membresias.models import ClienteMembresia
-        return ClienteMembresia.objects.filter(
+        qs = ClienteMembresia.objects.filter(cliente=self, estado='activa')
+        if disciplina:
+            qs = qs.filter(membresia__disciplina=disciplina)
+        return qs.first()
+
+    def get_membresias_activas(self):
+        if hasattr(self, '_membresias_prefetch'):
+            return self._membresias_prefetch
+        from apps.membresias.models import ClienteMembresia
+        return list(ClienteMembresia.objects.filter(
             cliente=self, estado='activa'
-        ).first()
+        ).select_related('membresia'))

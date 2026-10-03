@@ -48,8 +48,20 @@ class DetalleVenta(models.Model):
         ('membresia', 'Membresía'),
         ('ocasional', 'Entrada Ocasional'),
     ]
+    DISCIPLINA_CHOICES = [
+        ('gimnasio', 'Gimnasio'),
+        ('crossfit', 'Crossfit'),
+        ('kickboxing', 'Kick Boxing'),
+    ]
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
     tipo_item = models.CharField(max_length=15, choices=TIPO_ITEM_CHOICES, default='producto')
+    disciplina = models.CharField(
+        max_length=20,
+        choices=DISCIPLINA_CHOICES,
+        blank=True,
+        default='gimnasio',
+        verbose_name='Disciplina'
+    )
     producto = models.ForeignKey('inventario.Producto', on_delete=models.PROTECT,
                                  null=True, blank=True)
     membresia = models.ForeignKey('membresias.Membresia', on_delete=models.PROTECT,
@@ -71,4 +83,8 @@ class DetalleVenta(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.precio_unitario * self.cantidad
         self.costo_subtotal = self.costo_unitario * self.cantidad
+        if self.tipo_item == 'membresia' and self.membresia and not self.disciplina:
+            self.disciplina = self.membresia.disciplina
+        elif self.tipo_item == 'producto':
+            self.disciplina = ''
         super().save(*args, **kwargs)

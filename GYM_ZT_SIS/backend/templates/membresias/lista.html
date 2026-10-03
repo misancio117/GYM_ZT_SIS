@@ -12,10 +12,35 @@
 <div class="row g-3">
 {% for m in membresias %}
 <div class="col-md-4">
-    <div class="card h-100">
+    <div class="card h-100" style="border-top: 3px solid {% if m.disciplina == 'crossfit' %}#f59e0b{% elif m.disciplina == 'kickboxing' %}#ef4444{% else %}#3b82f6{% endif %};">
         <div class="card-body text-center">
-            <div class="mb-2"><i class="bi bi-credit-card-2-front-fill" style="font-size:36px;color:var(--accent)"></i></div>
-            <h5 class="fw-bold" style="color:#f0f4ff;">{{ m.nombre }}</h5>
+            <div class="mb-3 d-flex justify-content-center">
+                {% if m.disciplina == 'crossfit' %}
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:58px;height:58px;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.35);box-shadow:0 0 16px rgba(245,158,11,0.2);">
+                        <i class="bi bi-lightning-charge-fill" style="font-size:28px;color:#f59e0b;"></i>
+                    </div>
+                {% elif m.disciplina == 'kickboxing' %}
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:58px;height:58px;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.35);box-shadow:0 0 16px rgba(239,68,68,0.2);">
+                        <i class="bi bi-fire" style="font-size:28px;color:#ef4444;"></i>
+                    </div>
+                {% else %}
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:58px;height:58px;background:rgba(59,130,246,0.14);border:1px solid rgba(59,130,246,0.35);box-shadow:0 0 16px rgba(59,130,246,0.2);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#3b82f6" viewBox="0 0 24 24">
+                            <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43 1.43 1.43 2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43 1.43-1.43-1.43-1.43-1.43 1.43z"/>
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+            <h5 class="fw-bold mb-1" style="color:#f0f4ff;">{{ m.nombre }}</h5>
+            <div class="mb-2">
+                {% if m.disciplina == 'crossfit' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-lightning-charge-fill"></i> Crossfit</span>
+                {% elif m.disciplina == 'kickboxing' %}
+                    <span class="badge bg-danger"><i class="bi bi-fire"></i> Kick Boxing</span>
+                {% else %}
+                    <span class="badge bg-primary"><i class="bi bi-activity"></i> Gimnasio</span>
+                {% endif %}
+            </div>
             <div class="kpi-value text-green mb-1">Bs.{{ m.precio }}</div>
             <p style="color:#c5cfe8;">{{ m.duracion_dias }} días</p>
             <p class="mb-2" style="font-size:0.85em;color:#f0f4ff;"><i class="bi bi-person"></i> Por: {{ m.usuario.username|default:'-' }}</p>

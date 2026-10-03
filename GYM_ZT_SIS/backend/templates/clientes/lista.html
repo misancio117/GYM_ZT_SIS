@@ -17,7 +17,7 @@
                     <option value="">Todos</option>
                     <option value="sin" {% if membresia_filter == 'sin' %}selected{% endif %}>Sin membresía</option>
                     {% for m in membresias_disponibles %}
-                    <option value="{{ m.pk }}" {% if membresia_filter == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.nombre }}</option>
+                    <option value="{{ m.pk }}" {% if membresia_filter == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.nombre }} ({{ m.get_disciplina_display }})</option>
                     {% endfor %}
                 </select>
             </div>
@@ -53,10 +53,13 @@
                 <td><span style="color:#f0f4ff; font-size: 0.9em"><i class="bi bi-person"></i> {{ c.usuario.username|default:'-' }}</span></td>
                 <td><span class="chip {% if c.estado == 'activo' %}chip-green{% else %}chip-red{% endif %}">{{ c.get_estado_display }}</span></td>
                 <td>
-                    {% with mem=c.get_membresia_activa %}
-                    {% if mem %}<span class="chip chip-green">{{ mem.membresia.nombre }}</span>
-                    {% else %}<span class="chip chip-red">Sin membresía</span>{% endif %}
-                    {% endwith %}
+                    {% for mem in c.get_membresias_activas %}
+                        <span class="chip {% if mem.membresia.disciplina == 'crossfit' %}chip-orange{% elif mem.membresia.disciplina == 'kickboxing' %}chip-red{% else %}chip-green{% endif %} d-inline-block mb-1">
+                            {{ mem.membresia.nombre }} ({{ mem.membresia.get_disciplina_display }})
+                        </span>
+                    {% empty %}
+                        <span class="chip chip-red">Sin membresía</span>
+                    {% endfor %}
                 </td>
                 <td>
                     <a href="{% url 'clientes:detalle' c.pk %}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="bi bi-eye"></i></a>

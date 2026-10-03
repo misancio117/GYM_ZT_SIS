@@ -155,7 +155,8 @@ class AsignarMembresiaView(LoginRequiredMixin, CreateView):
                     venta=venta,
                     tipo_item='membresia',
                     membresia=membresia,
-                    descripcion=membresia.nombre,
+                    disciplina=membresia.disciplina,
+                    descripcion=f"{membresia.nombre} ({membresia.get_disciplina_display()})",
                     cantidad=1,
                     precio_unitario=membresia.precio,
                     costo_unitario=0,
@@ -165,7 +166,7 @@ class AsignarMembresiaView(LoginRequiredMixin, CreateView):
                 MovimientoCaja.objects.create(
                     caja=caja,
                     tipo='ingreso',
-                    descripcion=f'Membresía {membresia.nombre} - {cliente.nombre} - {metodo_pago}',
+                    descripcion=f'Membresía {membresia.nombre} [{membresia.get_disciplina_display()}] - {cliente.nombre} - {metodo_pago}',
                     monto=membresia.precio,
                     referencia=f'Venta #{venta.pk}',
                     fecha=fecha_movimiento,
@@ -187,7 +188,7 @@ class AsignarMembresiaView(LoginRequiredMixin, CreateView):
             request=self.request,
             accion='create',
             modulo='Membresías',
-            descripcion=f'Membresía "{membresia.nombre}" asignada al cliente {cliente.nombre} - Venta #{venta.pk} - {metodo_pago} - Fecha: {fecha_label}'
+            descripcion=f'Membresía "{membresia.nombre}" ({membresia.get_disciplina_display()}) asignada al cliente {cliente.nombre} - Venta #{venta.pk} - {metodo_pago} - Fecha: {fecha_label}'
         )
         messages.success(
             self.request,

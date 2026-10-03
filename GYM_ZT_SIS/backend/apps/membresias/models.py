@@ -3,8 +3,22 @@ from django.utils import timezone
 from datetime import timedelta, date
 
 
+DISCIPLINA_CHOICES = [
+    ('gimnasio', 'Gimnasio'),
+    ('crossfit', 'Crossfit'),
+    ('kickboxing', 'Kick Boxing'),
+]
+
+
 class Membresia(models.Model):
+    DISCIPLINA_CHOICES = DISCIPLINA_CHOICES
     nombre = models.CharField(max_length=100)
+    disciplina = models.CharField(
+        max_length=20,
+        choices=DISCIPLINA_CHOICES,
+        default='gimnasio',
+        verbose_name='Disciplina / Área'
+    )
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     duracion_dias = models.PositiveIntegerField(verbose_name='Duración (días)')
     estado = models.BooleanField(default=True, verbose_name='Activa')
@@ -17,7 +31,7 @@ class Membresia(models.Model):
         ordering = ['nombre']
 
     def __str__(self):
-        return f"{self.nombre} - {self.duracion_dias} días - Bs.{self.precio}"
+        return f"{self.nombre} ({self.get_disciplina_display()}) - {self.duracion_dias} días - Bs.{self.precio}"
 
 
 class ClienteMembresia(models.Model):

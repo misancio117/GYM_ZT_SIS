@@ -48,12 +48,14 @@
                 <input type="month" name="mes" value="{{ mes }}" class="form-control">
             </div>
 
-            <!-- FILTRO DE CATEGORÍA -->
+            <!-- FILTRO DE CATEGORÍA / DISCIPLINA -->
             <div class="col-md-3">
-                <label class="form-label small fw-600" style="color:#d0d8ee;">Filtrar por Área</label>
+                <label class="form-label small fw-600" style="color:#d0d8ee;">Filtrar por Área / Disciplina</label>
                 <select name="categoria" class="form-select">
                     <option value="all" {% if categoria == 'all' %}selected{% endif %}>🟢 Todo General</option>
-                    <option value="gym" {% if categoria == 'gym' %}selected{% endif %}>🏋️ Gym (Membresías)</option>
+                    <option value="gimnasio" {% if categoria == 'gimnasio' or categoria == 'gym' %}selected{% endif %}>🏋️ Gimnasio</option>
+                    <option value="crossfit" {% if categoria == 'crossfit' %}selected{% endif %}>⚡ Crossfit</option>
+                    <option value="kickboxing" {% if categoria == 'kickboxing' %}selected{% endif %}>🥊 Kick Boxing</option>
                     <option value="snacks" {% if categoria == 'snacks' %}selected{% endif %}>🍫 Snacks</option>
                     <option value="suplementos" {% if categoria == 'suplementos' %}selected{% endif %}>💊 Suplementos</option>
                     <option value="egresos" {% if categoria == 'egresos' %}selected{% endif %}>📉 Egresos (Gastos)</option>
@@ -101,7 +103,7 @@
             <div class="kpi-icon purple"><i class="bi bi-trophy-fill"></i></div>
             <div>
                 <div class="kpi-value text-accent">Bs.{{ ganancia_neta|floatformat:0 }}</div>
-                <div class="kpi-label">Ganancia Neta</div>
+                <div class="kpi-label">Ganancia Neta {% if categoria != 'all' %}({{ categoria|title }}){% endif %}</div>
             </div>
         </div>
     </div>
@@ -112,7 +114,7 @@
 <div class="row g-3 mb-3">
     <div class="col-12 col-md-4">
         <div class="kpi-card" style="padding: 12px; flex-direction: column; align-items: flex-start;">
-            <div class="kpi-label" style="font-size:0.8rem">Ingresos Gym (Membresías)</div>
+            <div class="kpi-label" style="font-size:0.8rem">Ingresos Gym / Membresías</div>
             <div class="kpi-value text-accent" style="font-size:1.2rem">Bs.{{ ganancias_detalle.ingresos_gym|floatformat:0 }}</div>
         </div>
     </div>
@@ -133,9 +135,8 @@
 </div>
 {% endif %}
 
-{% if categoria == 'all' or categoria == 'gym' %}
+{% if categoria == 'all' %}
 <div class="row g-3 mb-4">
-    {% if categoria == 'all' %}
     <div class="col-6 col-md-4">
         <div class="kpi-card">
             <div class="kpi-icon {% if utilidad >= 0 %}green{% else %}red{% endif %}">
@@ -149,22 +150,42 @@
             </div>
         </div>
     </div>
-    {% endif %}
-    <div class="col-6 {% if categoria == 'gym' %}col-md-6{% else %}col-md-4{% endif %}">
+    <div class="col-6 col-md-4">
         <div class="kpi-card">
             <div class="kpi-icon blue"><i class="bi bi-person-check"></i></div>
             <div>
                 <div class="kpi-value">{{ total_asistencias }}</div>
-                <div class="kpi-label">Asistencias</div>
+                <div class="kpi-label">Asistencias Totales</div>
             </div>
         </div>
     </div>
-    <div class="col-6 {% if categoria == 'gym' %}col-md-6{% else %}col-md-4{% endif %}">
+    <div class="col-6 col-md-4">
         <div class="kpi-card">
             <div class="kpi-icon orange"><i class="bi bi-person-plus"></i></div>
             <div>
                 <div class="kpi-value">{{ clientes_nuevos }}</div>
                 <div class="kpi-label">Clientes Nuevos</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% elif categoria in 'gym,gimnasio,crossfit,kickboxing' %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="bi bi-person-check"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_asistencias }}</div>
+                <div class="kpi-label">Asistencias ({{ categoria|title }})</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon yellow"><i class="bi bi-person-walking"></i></div>
+            <div>
+                <div class="kpi-value">{{ total_ocasionales }}</div>
+                <div class="kpi-label">Entradas Ocasionales ({{ categoria|title }})</div>
             </div>
         </div>
     </div>

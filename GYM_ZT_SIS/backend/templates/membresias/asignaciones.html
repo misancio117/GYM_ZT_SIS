@@ -31,7 +31,12 @@
             {% for a in asignaciones %}
             <tr>
                 <td class="fw-semibold">{{ a.cliente.nombre }}</td>
-                <td>{{ a.membresia.nombre }}</td>
+                <td>
+                    {{ a.membresia.nombre }}
+                    <span class="badge {% if a.membresia.disciplina == 'crossfit' %}bg-warning text-dark{% elif a.membresia.disciplina == 'kickboxing' %}bg-danger{% else %}bg-primary{% endif %}" style="font-size:0.75rem;">
+                        {{ a.membresia.get_disciplina_display }}
+                    </span>
+                </td>
                 <td><span style="color:#f0f4ff;font-size:0.9em"><i class="bi bi-person"></i> {{ a.usuario.username|default:'-' }}</span></td>
                 <td>{{ a.fecha_inicio|date:"d/m/Y" }}</td>
                 <td>{{ a.fecha_fin|date:"d/m/Y" }}</td>

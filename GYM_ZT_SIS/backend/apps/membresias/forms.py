@@ -6,9 +6,10 @@ from .models import Membresia, ClienteMembresia
 class MembresiaForm(forms.ModelForm):
     class Meta:
         model = Membresia
-        fields = ['nombre', 'precio', 'duracion_dias', 'estado', 'descripcion']
+        fields = ['nombre', 'disciplina', 'precio', 'duracion_dias', 'estado', 'descripcion']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'disciplina': forms.Select(attrs={'class': 'form-select'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'duracion_dias': forms.NumberInput(attrs={'class': 'form-control'}),
             'estado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -53,12 +54,11 @@ class AsignarMembresiaForm(forms.ModelForm):
 
         fecha_fin_nueva = fecha_inicio + timedelta(days=membresia.duracion_dias)
 
-        # Busca cualquier membresía activa o futura del cliente que se solape con el período nuevo.
-        # Solapamiento: la existente termina después de que empieza la nueva
-        #               Y la existente empieza antes de que termine la nueva.
+        # Busca si tiene membresía activa de la MISMA disciplina que se solape
         solapada = ClienteMembresia.objects.filter(
             cliente=cliente,
             estado='activa',
+            membresia__disciplina=membresia.disciplina,
             fecha_fin__gte=fecha_inicio,
             fecha_inicio__lte=fecha_fin_nueva,
         ).select_related('membresia').first()
@@ -66,10 +66,10 @@ class AsignarMembresiaForm(forms.ModelForm):
         if solapada:
             disponible_desde = solapada.fecha_fin + timedelta(days=1)
             raise forms.ValidationError(
-                f'El cliente ya tiene la membresía "{solapada.membresia.nombre}" '
+                f'El cliente ya tiene la membresía "{solapada.membresia.nombre}" ({solapada.membresia.get_disciplina_display()}) '
                 f'vigente del {solapada.fecha_inicio.strftime("%d/%m/%Y")} '
                 f'al {solapada.fecha_fin.strftime("%d/%m/%Y")}. '
-                f'La próxima membresía puede iniciar desde el '
+                f'La próxima membresía de {solapada.membresia.get_disciplina_display()} puede iniciar desde el '
                 f'{disponible_desde.strftime("%d/%m/%Y")}.'
             )
 

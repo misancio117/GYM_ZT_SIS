@@ -3,7 +3,7 @@ from apps.core.utils import AdminRequeridoMixin
 from django.views.generic import TemplateView
 from django.http import HttpResponse
 from django.utils import timezone
-from django.db.models import Sum, Count, F
+from django.db.models import Sum, Count, F, Q
 from datetime import timedelta, date
 import json
 from apps.ventas.models import Venta, DetalleVenta
@@ -90,18 +90,51 @@ class ReportesView(AdminRequeridoMixin, LoginRequiredMixin, TemplateView):
 
         categoria = self.request.GET.get('categoria', 'all')
 
-        # Filtros de area/categoria
-        if categoria == 'gym':
-            ventas = ventas.filter(tipo__in=['membresia', 'ocasional'])
+        # Filtros de area/categoria/disciplina
+        if categoria in ['gym', 'gimnasio']:
+            ventas = ventas.filter(
+                Q(detalles__disciplina__in=['gimnasio', 'gym', '']) |
+                Q(detalles__membresia__disciplina='gimnasio')
+            ).distinct()
+            ocasionales = ocasionales.filter(disciplina__in=['gimnasio', 'gym', ''])
+            asistencias = asistencias.filter(disciplina__in=['gimnasio', 'gym', ''])
             egresos = egresos.none()
+            titulo += " — Gimnasio"
+        elif categoria == 'crossfit':
+            ventas = ventas.filter(
+                Q(detalles__disciplina='crossfit') |
+                Q(detalles__membresia__disciplina='crossfit')
+            ).distinct()
+            ocasionales = ocasionales.filter(disciplina='crossfit')
+            asistencias = asistencias.filter(disciplina='crossfit')
+            egresos = egresos.none()
+            titulo += " — Crossfit"
+        elif categoria == 'kickboxing':
+            ventas = ventas.filter(
+                Q(detalles__disciplina='kickboxing') |
+                Q(detalles__membresia__disciplina='kickboxing')
+            ).distinct()
+            ocasionales = ocasionales.filter(disciplina='kickboxing')
+            asistencias = asistencias.filter(disciplina='kickboxing')
+            egresos = egresos.none()
+            titulo += " — Kick Boxing"
         elif categoria == 'snacks':
             ventas = ventas.filter(detalles__producto__categoria='snack').distinct()
             egresos = egresos.none()
+            asistencias = asistencias.none()
+            ocasionales = ocasionales.none()
+            titulo += " — Snacks"
         elif categoria == 'suplementos':
             ventas = ventas.filter(detalles__producto__categoria='suplemento').distinct()
             egresos = egresos.none()
+            asistencias = asistencias.none()
+            ocasionales = ocasionales.none()
+            titulo += " — Suplementos"
         elif categoria == 'egresos':
             ventas = ventas.none()
+            asistencias = asistencias.none()
+            ocasionales = ocasionales.none()
+            titulo += " — Egresos"
 
         total_ingresos = ventas.aggregate(t=Sum('total'))['t'] or 0
         total_egresos = egresos.aggregate(t=Sum('monto'))['t'] or 0
@@ -191,10 +224,27 @@ def reporte_pdf(request):
         titulo_reporte = f"Reporte Mensual: {m}/{año}"
 
     categoria = request.GET.get('categoria', 'all')
-    if categoria == 'gym':
-        ventas = ventas.filter(tipo__in=['membresia', 'ocasional'])
+    if categoria in ['gym', 'gimnasio']:
+        ventas = ventas.filter(
+            Q(detalles__disciplina__in=['gimnasio', 'gym', '']) |
+            Q(detalles__membresia__disciplina='gimnasio')
+        ).distinct()
         egresos = egresos.none()
-        titulo_reporte += " (Gym)"
+        titulo_reporte += " (Gimnasio)"
+    elif categoria == 'crossfit':
+        ventas = ventas.filter(
+            Q(detalles__disciplina='crossfit') |
+            Q(detalles__membresia__disciplina='crossfit')
+        ).distinct()
+        egresos = egresos.none()
+        titulo_reporte += " (Crossfit)"
+    elif categoria == 'kickboxing':
+        ventas = ventas.filter(
+            Q(detalles__disciplina='kickboxing') |
+            Q(detalles__membresia__disciplina='kickboxing')
+        ).distinct()
+        egresos = egresos.none()
+        titulo_reporte += " (Kick Boxing)"
     elif categoria == 'snacks':
         ventas = ventas.filter(detalles__producto__categoria='snack').distinct()
         egresos = egresos.none()

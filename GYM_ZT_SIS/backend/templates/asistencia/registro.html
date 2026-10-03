@@ -9,18 +9,25 @@
             <div class="card-body">
                 <input type="text" id="clienteSearch" class="form-control mb-3" placeholder="🔍 Buscar cliente por nombre o CI..." autofocus>
                 <div id="searchResults"></div>
-                <form method="post" id="asistenciaForm" class="d-none">
-                    {% csrf_token %}
-                    <input type="hidden" name="cliente_id" id="clienteId">
-                    <div class="d-flex align-items-center gap-3 p-3 rounded" style="background:var(--bg-card2)">
-                        <i class="bi bi-person-circle" style="font-size:36px;color:var(--accent)"></i>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold" style="color:#f0f4ff;" id="clienteNombre"></div>
-                            <small style="color:#c5cfe8;" id="clienteMembresia"></small>
+                    <form method="post" id="asistenciaForm" class="d-none">
+                        {% csrf_token %}
+                        <input type="hidden" name="cliente_id" id="clienteId">
+                        <input type="hidden" name="disciplina" id="disciplinaInput">
+                        <div class="p-3 rounded" style="background:var(--bg-card2)">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <i class="bi bi-person-circle" style="font-size:36px;color:var(--accent)"></i>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold" style="color:#f0f4ff;" id="clienteNombre"></div>
+                                    <small style="color:#c5cfe8;" id="clienteMembresia"></small>
+                                </div>
+                            </div>
+                            <div id="disciplinaSelectorContainer" class="d-none mb-3">
+                                <label class="form-label small text-muted">Seleccionar disciplina para el ingreso:</label>
+                                <select id="disciplinaSelectAttendance" class="form-select form-select-sm"></select>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg"></i> Registrar Asistencia</button>
                         </div>
-                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Registrar</button>
-                    </div>
-                </form>
+                    </form>
             </div>
         </div>
         <div class="card">
@@ -29,6 +36,14 @@
                 {% if caja_abierta %}
                 <form method="post" action="{% url 'asistencia:ocasional_nuevo' %}">
                     {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label small" style="color:#d0d8ee;">Área / Disciplina</label>
+                        <select name="disciplina" class="form-select" required>
+                            <option value="gimnasio">🏋️ Gimnasio</option>
+                            <option value="crossfit">⚡ Crossfit</option>
+                            <option value="kickboxing">🥊 Kick Boxing</option>
+                        </select>
+                    </div>
                     <div class="mb-2">
                         <input type="text" name="nombre" class="form-control" placeholder="Nombre (opcional)" value="Visitante">
                     </div>
@@ -64,16 +79,19 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-hover mb-0">
-                    <thead><tr><th>Cliente</th><th>Membresía</th><th>Hora</th><th>Tipo</th></tr></thead>
+                    <thead><tr><th>Cliente</th><th>Área</th><th>Hora</th><th>Tipo</th></tr></thead>
                     <tbody>
                     {% for a in asistencias_hoy %}
                     <tr>
                         <td class="fw-semibold">{{ a.cliente.nombre }}</td>
                         <td>
-                            {% with mem=a.cliente.get_membresia_activa %}
-                                {% if mem %}🏷️ {{ mem.membresia.nombre }}
-                                {% else %}<span class="text-muted">—</span>{% endif %}
-                            {% endwith %}
+                            {% if a.disciplina == 'crossfit' %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-lightning-charge-fill"></i> Crossfit</span>
+                            {% elif a.disciplina == 'kickboxing' %}
+                                <span class="badge bg-danger"><i class="bi bi-fire"></i> Kick Boxing</span>
+                            {% else %}
+                                <span class="badge bg-primary"><i class="bi bi-activity"></i> Gimnasio</span>
+                            {% endif %}
                         </td>
                         <td>{{ a.hora|time:"H:i" }}</td>
                         <td><span class="badge bg-primary">Suscrito</span></td>
@@ -82,12 +100,21 @@
                     {% for o in ocasionales_hoy_lista %}
                     <tr style="background:rgba(72,199,142,0.08);">
                         <td class="fw-semibold" style="color:#48c78e;">{{ o.nombre }}</td>
+                        <td>
+                            {% if o.disciplina == 'crossfit' %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-lightning-charge-fill"></i> Crossfit</span>
+                            {% elif o.disciplina == 'kickboxing' %}
+                                <span class="badge bg-danger"><i class="bi bi-fire"></i> Kick Boxing</span>
+                            {% else %}
+                                <span class="badge bg-primary"><i class="bi bi-activity"></i> Gimnasio</span>
+                            {% endif %}
+                        </td>
                         <td style="color:#48c78e;">{{ o.hora|time:"H:i" }}</td>
                         <td><span class="badge" style="background:#48c78e;color:#0d1b0f;">Ocasional &bull; Bs.{{ o.monto_pagado }}</span></td>
                     </tr>
                     {% endfor %}
                     {% if not asistencias_hoy and not ocasionales_hoy_lista %}
-                    <tr><td colspan="3" class="text-muted text-center py-3">Sin asistencias hoy</td></tr>
+                    <tr><td colspan="4" class="text-muted text-center py-3">Sin asistencias hoy</td></tr>
                     {% endif %}
                     </tbody>
                 </table>
@@ -114,7 +141,7 @@ searchInput.addEventListener('input', function() {
             const item = document.createElement('div');
             item.className = 'attendance-item';
             item.style.cursor = 'pointer';
-            item.addEventListener('click', () => selectCliente(c.id, c.nombre, c.membresia));
+            item.addEventListener('click', () => selectCliente(c));
 
             const icon = document.createElement('i');
             icon.className = 'bi bi-person-circle';
@@ -134,13 +161,40 @@ searchInput.addEventListener('input', function() {
         });
     }, 300);
 });
-function selectCliente(id, nombre, membresia) {
-    document.getElementById('clienteId').value = id;
-    document.getElementById('clienteNombre').textContent = nombre;
-    document.getElementById('clienteMembresia').textContent = '🏷️ ' + membresia;
+
+function selectCliente(cliente) {
+    document.getElementById('clienteId').value = cliente.id;
+    document.getElementById('clienteNombre').textContent = cliente.nombre;
+    document.getElementById('clienteMembresia').textContent = '🏷️ ' + cliente.membresia;
+
+    const discContainer = document.getElementById('disciplinaSelectorContainer');
+    const discSelect = document.getElementById('disciplinaSelectAttendance');
+    const discHidden = document.getElementById('disciplinaInput');
+
+    const activas = cliente.membresias_activas || [];
+    if (activas.length > 1) {
+        discSelect.innerHTML = '';
+        activas.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.disciplina;
+            opt.textContent = `${m.disciplina_display} — ${m.nombre}`;
+            discSelect.appendChild(opt);
+        });
+        discContainer.classList.remove('d-none');
+        discHidden.value = discSelect.value;
+        discSelect.onchange = () => { discHidden.value = discSelect.value; };
+    } else if (activas.length === 1) {
+        discContainer.classList.add('d-none');
+        discHidden.value = activas[0].disciplina;
+    } else {
+        discContainer.classList.add('d-none');
+        discHidden.value = '';
+    }
+
     form.classList.remove('d-none');
     results.innerHTML = '';
     searchInput.value = '';
 }
 </script>
 {% endblock %}
+

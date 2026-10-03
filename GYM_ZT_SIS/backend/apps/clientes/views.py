@@ -274,19 +274,33 @@ def cliente_search_api(request):
         estado='activo'
     )[:10])
     ids = [c.pk for c in clientes]
-    membresias_map = {
-        cm.cliente_id: cm.membresia.nombre
-        for cm in ClienteMembresia.objects.filter(
-            cliente_id__in=ids, estado='activa'
-        ).select_related('membresia')
-    }
-    data = [
-        {
+    
+    membresias_map = {}
+    for cm in ClienteMembresia.objects.filter(cliente_id__in=ids, estado='activa').select_related('membresia'):
+        if cm.cliente_id not in membresias_map:
+            membresias_map[cm.cliente_id] = []
+        membresias_map[cm.cliente_id].append({
+            'id': cm.pk,
+            'nombre': cm.membresia.nombre,
+            'disciplina': cm.membresia.disciplina,
+            'disciplina_display': cm.membresia.get_disciplina_display(),
+            'label': f"{cm.membresia.nombre} ({cm.membresia.get_disciplina_display()})"
+        })
+
+    data = []
+    for c in clientes:
+        mems = membresias_map.get(c.pk, [])
+        if mems:
+            mem_texto = ", ".join(m['label'] for m in mems)
+        else:
+            mem_texto = 'Sin membresía activa'
+
+        data.append({
             'id': c.pk,
             'nombre': c.nombre,
             'telefono': c.telefono,
-            'membresia': membresias_map.get(c.pk, 'Sin membresía activa'),
-        }
-        for c in clientes
-    ]
+            'membresia': mem_texto,
+            'membresias_activas': mems,
+        })
+
     return JsonResponse({'results': data})
